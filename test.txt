@@ -1,0 +1,99 @@
+{
+  "type": 2,
+  "name": "div",
+  "attributes": {},
+  "children": [
+    {
+      "type": 1,
+      "text": "foo"
+    },
+    {
+      "type": 1,
+      "text": "bar"
+    },
+    {
+      "type": 1,
+      "text": "baz"
+    }
+  ]
+}
+
+{
+  "type": 2,
+  "name": "div",
+  "attributes": {},
+  "children": [
+    {
+      "type": 1,
+      "text": "0"
+    },
+    {
+      "type": 1,
+      "text": "foo"
+    },
+    {
+      "type": 1,
+      "text": "1"
+    },
+    {
+      "type": 1,
+      "text": "baz"
+    },
+    {
+      "type": 1,
+      "text": "2"
+    }
+  ]
+}
+
+{
+  "type": 2,
+  "name": "div",
+  "attributes": {},
+  "children": [
+    {
+      "type": 1,
+      "text": "foo"
+    },
+    {
+      "type": 2,
+      "name": "div",
+      "attributes": {},
+      "children": [
+        {
+          "type": 1,
+          "text": "bar"
+        }
+      ]
+    },
+    {
+      "type": 1,
+      "text": "baz"
+    },
+    {
+      "type": 1,
+      "text": "quux"
+    }
+  ]
+}
+
+{
+  "type": 2,
+  "name": "div",
+  "attributes": {},
+  "children": []
+}
+
+{
+  "type": 2,
+  "name": "div",
+  "attributes": {},
+  "children": []
+}
+
+{
+  "type": 2,
+  "name": "div",
+  "attributes": {},
+  "children": []
+}
