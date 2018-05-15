@@ -5,15 +5,15 @@
   "children": [
     {
       "type": 1,
-      "text": "foo"
+      "name": "foo"
     },
     {
       "type": 1,
-      "text": "bar"
+      "name": "bar"
     },
     {
       "type": 1,
-      "text": "baz"
+      "name": "baz"
     }
   ]
 }
@@ -25,23 +25,23 @@
   "children": [
     {
       "type": 1,
-      "text": "0"
+      "name": "0"
     },
     {
       "type": 1,
-      "text": "foo"
+      "name": "foo"
     },
     {
       "type": 1,
-      "text": "1"
+      "name": "1"
     },
     {
       "type": 1,
-      "text": "baz"
+      "name": "baz"
     },
     {
       "type": 1,
-      "text": "2"
+      "name": "2"
     }
   ]
 }
@@ -53,7 +53,7 @@
   "children": [
     {
       "type": 1,
-      "text": "foo"
+      "name": "foo"
     },
     {
       "type": 2,
@@ -62,17 +62,17 @@
       "children": [
         {
           "type": 1,
-          "text": "bar"
+          "name": "bar"
         }
       ]
     },
     {
       "type": 1,
-      "text": "baz"
+      "name": "baz"
     },
     {
       "type": 1,
-      "text": "quux"
+      "name": "quux"
     }
   ]
 }

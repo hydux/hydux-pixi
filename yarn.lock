@@ -3632,9 +3632,9 @@ trim-newlines@^1.0.0:
   version "1.0.0"
   resolved "http://registry.npm.taobao.org/trim-newlines/download/trim-newlines-1.0.0.tgz#5887966bb582a4503a41eb524f7d35011815a613"
 
-ts-node@^6.0.0:
-  version "6.0.0"
-  resolved "http://registry.npm.taobao.org/ts-node/download/ts-node-6.0.0.tgz#46c25f8498593a9248eeea16906f1598fa098140"
+ts-node@^6.0.3:
+  version "6.0.3"
+  resolved "http://registry.npm.taobao.org/ts-node/download/ts-node-6.0.3.tgz#28bf74bcad134fad17f7469dad04638ece03f0f4"
   dependencies:
     arrify "^1.0.0"
     chalk "^2.3.0"

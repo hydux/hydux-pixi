@@ -1,4 +1,4 @@
-import { render, domApi, h } from '../vdom'
+import { render, domApi, h } from '../../vdom'
 import * as assert from 'assert'
 import * as fs from 'fs'
 const jsdom = require('jsdom')
@@ -16,10 +16,6 @@ function testTrees(name, trees) {
     done()
   })
 }
-let res = [] as string[]
-;(assert as any).deepEqual = function (vnodes) {
-  res.push(JSON.stringify(vnodes, null, 2))
-}
 describe('desc', () => {
   beforeEach(() => {
     document.body.innerHTML = ''
@@ -29,41 +25,90 @@ describe('desc', () => {
     document.body.innerHTML = ''
   })
 
-  after(() => {
-    fs.writeFileSync('./test.txt', res.join('\n\n'))
-  })
-
   it('positional string/number children', () => {
     assert.deepEqual(h('div', {}, 'foo', 'bar', 'baz'), {
-      name: 'div',
-      attributes: {},
-      children: ['foo', 'bar', 'baz'],
-    })
-
-    assert.deepEqual(h('div', {}, 0, 'foo', 1, 'baz', 2), {
-      name: 'div',
-      attributes: {},
-      children: [0, 'foo', 1, 'baz', 2],
-    })
-
-    assert.deepEqual(h('div', {}, 'foo', h('div', {}, 'bar'), 'baz', 'quux'), {
+      type: 2,
       name: 'div',
       attributes: {},
       children: [
-        'foo',
         {
+          type: 1,
+          name: 'foo',
+        },
+        {
+          type: 1,
+          name: 'bar',
+        },
+        {
+          type: 1,
+          name: 'baz',
+        },
+      ],
+    })
+
+    assert.deepEqual(h('div', {}, 0, 'foo', 1, 'baz', 2), {
+      type: 2,
+      name: 'div',
+      attributes: {},
+      children: [
+        {
+          type: 1,
+          name: '0',
+        },
+        {
+          type: 1,
+          name: 'foo',
+        },
+        {
+          type: 1,
+          name: '1',
+        },
+        {
+          type: 1,
+          name: 'baz',
+        },
+        {
+          type: 1,
+          name: '2',
+        },
+      ],
+    })
+
+    assert.deepEqual(h('div', {}, 'foo', h('div', {}, 'bar'), 'baz', 'quux'), {
+      type: 2,
+      name: 'div',
+      attributes: {},
+      children: [
+        {
+          type: 1,
+          name: 'foo',
+        },
+        {
+          type: 2,
           name: 'div',
           attributes: {},
-          children: ['bar'],
+          children: [
+            {
+              type: 1,
+              name: 'bar',
+            },
+          ],
         },
-        'baz',
-        'quux',
+        {
+          type: 1,
+          name: 'baz',
+        },
+        {
+          type: 1,
+          name: 'quux',
+        },
       ],
     })
   })
 
   it('skip null and boolean children', () => {
     const expected = {
+      type: 2,
       name: 'div',
       attributes: {},
       children: [],

@@ -1,3 +1,6 @@
+import * as Hydux from 'hydux'
+
+const flatten1 = <T>(args: (T | T[])[]) => ([] as T[]).concat(...args)
 
 export type Attributes = {
   [k: string]: any
@@ -6,25 +9,95 @@ export type Attributes = {
 const VNodeType = {
   text: 1 as 1,
   element: 2 as 2,
+  component: 3 as 3,
+  fragment: 4 as 4,
+}
+
+function mountComp<Node>(parent: Node, node: Node, vnode: VNode, api: DOMApi<Node>) {
+  if (vnode.type === VNodeType.text) {
+    return
+  }
+  let ref: Ref | null = (node as any).ref ? (node as any).ref : null
+  let comp = api.getComponent(node)
+  if (comp) {
+    comp._$parentElement = parent
+    comp._$rootElement = node
+    comp._$api = api
+    comp._onMount()
+  }
+  if (ref) {
+    ref(comp ? comp : node)
+  }
+}
+
+export abstract class Component<P = any, Msg = any, S = any> {
+  // @internal
+  props: P
+  actions: any
+
+  // @internal
+  _$rootElement: any
+  // @internal
+  _$parentElement: any
+  // @internal
+  _$api: DOMApi<any>
+
+  ctx: Hydux.Context<S, any, any>
+  // @internal
+  _$lastView: VNode | undefined
+  // @internal
+  _onMount() {
+    this.ctx = Hydux.app({
+      init: () => this.init(),
+      actions: this.actions,
+      view: (s, a) => this.view(s, a),
+      onRender: (view) => {
+        patch(this._$parentElement, this._$rootElement, this._$lastView, view, this._$api)
+        this._$lastView = view
+      },
+    })
+  }
+  abstract init(): S | Hydux.ActionCmdResult<S, any>
+  view(state: S, actions: any): VNode | boolean | null {
+    return null
+  }
 }
 
 export type VNodeType = (typeof VNodeType)[keyof (typeof VNodeType)]
-export type ElementVNode = {
-  type: typeof VNodeType.element
-  name: string
-  attributes: {[k: string]: any} | null
+export type Ref = (node: any) => void
+export interface BaseVNode {
   children: VNode[]
-  key: string | number | undefined
+  key?: string | number
+  ref?: Ref
 }
-export type TextVNode = {
+export interface ElementVNode extends BaseVNode {
+  type: typeof VNodeType.element
+  attributes: {[k: string]: any} | null
+  name: string
+}
+export interface ComponentVNode<T extends typeof Component> extends BaseVNode {
+  type: typeof VNodeType.component
+  attributes: {[k: string]: any} | null
+  name: T
+}
+export interface TextVNode {
   type: typeof VNodeType.text
-  text: string
+  name: string
+}
+
+export interface FragmentVNode extends BaseVNode {
+  type: typeof VNodeType.fragment
+  attributes: {[k: string]: any} | null
+  name: 'fragment'
 }
 export type VNode =
+| ComponentVNode<any>
 | ElementVNode
 | TextVNode
+| FragmentVNode
 
 export interface DOMApi<Node> {
+  getComponent: (node: Node) => Component | void
   createElement: (node: VNode) => Node
   setAttributes: (node: Node, attrs: { [k: string]: any } | null) => void
   insertAt: (parentNode: Node, newNode: Node, i: number) => void
@@ -34,7 +107,7 @@ export interface DOMApi<Node> {
   removeChild: (node: Node, child: Node) => void
   removeChildAt: (node: Node, i: number) => void
   appendChild: (node: Node, child: Node) => void
-  setTextContent: (node: Node, text: string | undefined) => void
+  setTextContent: (node: Node, text: string) => void
 }
 
 type ChildOne = | VNode | number | string | null | boolean | undefined
@@ -55,7 +128,7 @@ const Is = {
   }
 }
 
-export function h(name: string, attributes: null | {[k: string]: any}, ...args: Child[]): VNode {
+export function h(name: string | typeof Component, attributes: null | {[k: string]: any}, ...args: Child[]): VNode {
   let children: VNode[] = []
   let rest: Child[] = []
   let len = arguments.length
@@ -73,27 +146,46 @@ export function h(name: string, attributes: null | {[k: string]: any}, ...args: 
       ) {
         children.push({
           type: VNodeType.text,
-          text: child + '',
+          name: child + '',
         })
       } else {
         children.push(child)
       }
     }
   }
-  return {
-    type: VNodeType.element,
-    name,
-    attributes,
-    children,
-    key: attributes && attributes.key,
+  let key: string | number | undefined
+  let ref: ((n: any) => void) | undefined
+  if (attributes) {
+    key = attributes.key
+    ref = attributes.ref
+    attributes = { ...attributes }
+    delete attributes.key
+    delete attributes.ref
   }
+  let node: ComponentVNode<any> | ElementVNode =
+    typeof name === 'string'
+    ? {
+      type: VNodeType.element,
+      name,
+      attributes,
+      children,
+    }
+    : {
+      type: VNodeType.component,
+      name,
+      attributes,
+      children,
+    }
+  if (key) node.key = key
+  if (ref) node.ref = ref
+  return node
 }
 
 function diffProps(prevProps: Attributes | null, nextProps: Attributes | null): Attributes | null {
   if (!prevProps) {
     return nextProps
   }
-  nextProps = { ...nextProps, key: void 0 }
+  nextProps = { ...nextProps }
   for (const key in prevProps) {
     if (!Is.defined(nextProps[key])) {
       nextProps[key] = null
@@ -111,28 +203,41 @@ export function patch<Node>(parent: Node, element: Node, oldNode: VNode | undefi
     const newElement = api.createElement(node)
     api.insertBefore(parent, newElement, element)
     api.removeChild(parent, element)
+    mountComp(parent, element, node, api)
     return newElement
   }
   if (!Is.defined(oldNode)) {
     return replaceNode()
   }
   if (
-    oldNode.type === VNodeType.text ||
+    oldNode.type === VNodeType.text &&
     node.type === VNodeType.text
   ) {
-    if (oldNode.type !== node.type) {
-      return replaceNode()
-    }
-    api.setTextContent(parent, (node as TextVNode).text)
+    api.setTextContent(parent, (node as TextVNode).name)
     return element
-  }
-  if (oldNode.name !== node.name || oldNode.key !== node.key) {
+  } else if (
+    oldNode.type === VNodeType.text ||
+    oldNode.type !== node.type ||
+    oldNode.name !== node.name ||
+    oldNode.key !== node.key
+  ) {
     return replaceNode()
   }
-
-  api.setAttributes(element, diffProps(oldNode.attributes, node.attributes))
-
-  updateChildren(element, oldNode.children, node.children, api)
+  const attributes = { ...node.attributes }
+  if (
+    node.type === VNodeType.component
+  ) {
+    let comp = api.getComponent(element)
+    if (!comp) {
+      return replaceNode()
+    }
+    attributes['children'] = node.children
+    comp.props = attributes
+    comp.ctx.render()
+  } else {
+    api.setAttributes(element, diffProps(oldNode.attributes, attributes))
+    updateChildren(element, oldNode.children, node.children, api)
+  }
 }
 
 function updateChildren<Node>(element: Node, oldChildren: VNode[], children: VNode[], api: DOMApi<Node>) {
@@ -157,7 +262,9 @@ function updateChildren<Node>(element: Node, oldChildren: VNode[], children: VNo
       if (Is.defined(childEl)) {
         patch<Node>(element, childEl, oldChild, child, api)
       } else {
-        api.appendChild(element, api.createElement(child))
+        let newChildEl = api.createElement(child)
+        api.appendChild(element, newChildEl)
+        mountComp(element, newChildEl, child, api)
       }
     }
     if (
@@ -169,6 +276,7 @@ function updateChildren<Node>(element: Node, oldChildren: VNode[], children: VNo
         patchChild()
         break
       }
+      // FIXME: oldIdx is changed
       let [oldIdx, oldNode, oldEl] = old
       if (oldIdx === i) {
         patchChild()
@@ -189,38 +297,59 @@ function updateChildren<Node>(element: Node, oldChildren: VNode[], children: VNo
     api.removeChildAt(element, i)
   }
 }
-const KEY = '__node'
+const NodeKey = '__node'
+const ComponentKey = '__component'
 export function render<Node>(node: VNode, container: Node, api: DOMApi<Node>) {
   let child = api.getChildAt(container, 0)
   if (!child) {
     child = api.createElement(node)
     api.appendChild(container, child)
+    mountComp(container, child, node, api)
   }
-  let oldNode: VNode | undefined = child[KEY]
-  child[KEY] = node
+  let oldNode: VNode | undefined = child[NodeKey]
+  child[NodeKey] = node
   return patch(container, child, oldNode, node, api)
 }
 export const domApi: DOMApi<Node> = {
-  createElement(node) {
-    if (node.type === VNodeType.text) {
-      return document.createTextNode(node.text)
-    } else {
-      const el = document.createElement(node.name)
-      domApi.setAttributes(el, node.attributes)
-      node.children
-      .map(domApi.createElement)
-      .forEach(child => {
-        el.appendChild(child)
-      })
-      return el
+  getComponent(node) {
+    return node[ComponentKey]
+  },
+  createElement(node): Node {
+    switch (node.type) {
+      case VNodeType.text:
+        return document.createTextNode(node.name)
+      case VNodeType.element:
+        const el = document.createElement(node.name)
+        domApi.setAttributes(el, node.attributes)
+        flatten1<Node>(
+          node.children
+          .map(domApi.createElement)
+        )
+        .forEach(child => {
+          el.appendChild(child)
+        })
+        return el
+      case VNodeType.component:
+        let comp: Component = new node.name()
+        comp.props = node.attributes
+        let view = comp.ctx.view(comp.ctx.state, comp.ctx.actions)
+        if (view && typeof view !== 'boolean') {
+          let el = domApi.createElement(view)
+          el[ComponentKey] = comp
+          comp._$rootElement = el
+          return el
+        }
+        return document.createTextNode('')
+      case VNodeType.fragment:
+        let f = document.createDocumentFragment()
+        return f
+      default:
+        return Hydux.never(node)
     }
   },
   setAttributes(node, attrs) {
     if (attrs !== null) {
       for (const key in attrs) {
-        if (key === 'key') {
-          continue
-        }
         let val = attrs[key]
 
         if (Is.fn(val)) {
@@ -260,8 +389,6 @@ export const domApi: DOMApi<Node> = {
     node.appendChild(child)
   },
   setTextContent(node, text) {
-    if (Is.defined(text)) {
-      (node as HTMLElement).innerText = text
-    }
+    (node as HTMLElement).innerText = text
   }
 }

@@ -1,6 +1,5 @@
 import * as pixi from 'pixi.js'
 import * as Consts from 'consts'
-import h from './h'
 
 export function Container (props, children) {
   return {
@@ -18,4 +17,4 @@ export function Spirit(props, children) {
   }
 }
 
-let a = <div key={1}/>
+// let a = <div key={1}/>
