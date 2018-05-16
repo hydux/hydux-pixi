@@ -10,56 +10,72 @@ const VNodeType = {
   text: 1 as 1,
   element: 2 as 2,
   component: 3 as 3,
-  fragment: 4 as 4,
 }
 
-function mountComp<Node>(parent: Node, node: Node, vnode: VNode, api: DOMApi<Node>) {
+function mountComp<Node>(parent: Node, node: Node, vnode: VNode, api: ICustomAPI<Node>) {
   if (vnode.type === VNodeType.text) {
     return
   }
   let ref: Ref | null = (node as any).ref ? (node as any).ref : null
-  let comp = api.getComponent(node)
+  let comp: Component | void = api.getComponent(node)
   if (comp) {
-    comp._$parentElement = parent
-    comp._$rootElement = node
-    comp._$api = api
-    comp._onMount()
+    comp.rootElement = node
+    comp._$internals.parentElement = parent
+    comp._$internals.nativeApi = api
+    comp.onMount()
   }
   if (ref) {
     ref(comp ? comp : node)
   }
 }
 
-export abstract class Component<P = any, Msg = any, S = any> {
+export abstract class Component<P = any> {
+  props: P
+  rootElement: any
+  _$internals: {
+    parentElement: any
+    nativeApi: any
+  }
+  onMount() {
+    // ignore
+  }
+  onUnmount() {
+    // ignore
+  }
+  render() {
+    // ignore
+  }
+}
+
+export abstract class HyduxComponent<P = any, S = any> extends Component<P> {
   // @internal
   props: P
   actions: any
 
-  // @internal
-  _$rootElement: any
-  // @internal
-  _$parentElement: any
-  // @internal
-  _$api: DOMApi<any>
+  rootElement: any
 
-  ctx: Hydux.Context<S, any, any>
-  // @internal
-  _$lastView: VNode | undefined
-  // @internal
-  _onMount() {
-    this.ctx = Hydux.app({
-      init: () => this.init(),
-      actions: this.actions,
-      view: (s, a) => this.view(s, a),
-      onRender: (view) => {
-        patch(this._$parentElement, this._$rootElement, this._$lastView, view, this._$api)
+  protected ctx: Hydux.Context<S, any, any> = Hydux.app({
+    init: () => this.init(),
+    actions: this.actions,
+    view: (s, a) => this.view(s, a),
+    onRender: (view) => {
+      if (
+        Is.defined(this.rootElement) &&
+        Is.defined(this._$internals.parentElement)
+      ) {
+        patch(this._$internals.parentElement, this.rootElement, this._$lastView, view, this._$internals.nativeApi)
         this._$lastView = view
-      },
-    })
-  }
+      }
+      return view
+    },
+  })
+  private _$lastView: VNode | undefined
   abstract init(): S | Hydux.ActionCmdResult<S, any>
   view(state: S, actions: any): VNode | boolean | null {
     return null
+  }
+  render() {
+    return this.ctx.render()
   }
 }
 
@@ -83,31 +99,31 @@ export interface ComponentVNode<T extends typeof Component> extends BaseVNode {
 export interface TextVNode {
   type: typeof VNodeType.text
   name: string
+  key?: string | number
 }
 
-export interface FragmentVNode extends BaseVNode {
-  type: typeof VNodeType.fragment
-  attributes: {[k: string]: any} | null
-  name: 'fragment'
-}
 export type VNode =
 | ComponentVNode<any>
 | ElementVNode
 | TextVNode
-| FragmentVNode
-
-export interface DOMApi<Node> {
-  getComponent: (node: Node) => Component | void
-  createElement: (node: VNode) => Node
-  setAttributes: (node: Node, attrs: { [k: string]: any } | null) => void
-  insertAt: (parentNode: Node, newNode: Node, i: number) => void
-  insertBefore: (parentNode: Node, newNode: Node, referenceNode: Node | null) => void
-  getChildAt: (node: Node, i: number) => Node | undefined
-  getChildren: (node: Node) => Node[]
-  removeChild: (node: Node, child: Node) => void
-  removeChildAt: (node: Node, i: number) => void
-  appendChild: (node: Node, child: Node) => void
-  setTextContent: (node: Node, text: string) => void
+export interface ICustomAPI<Node> {
+  updateChildren?: (element: Node, oldChildren: VNode[], children: VNode[], api: ICustomAPI<Node>) => void
+  getComponent(node: Node): Component | undefined
+  setComponent(node: Node, comp: Component): void
+  createElement(node: VNode): Node
+  setAttributes(node: Node, attrs: { [k: string]: any } | null): void
+  /**
+   *
+   * @param parentNode
+   * @param newNode
+   * @param i
+   * @returns modified count
+   */
+  insertAt(parentNode: Node, newNode: Node, i: number): number
+  replaceChild(parentNode: Node, newNode: Node, oldNode: Node): void
+  getChildAt(node: Node, i: number): Node | undefined
+  removeChildAt(node: Node, i: number): void
+  setTextContent(node: Node, text: string): void
 }
 
 type ChildOne = | VNode | number | string | null | boolean | undefined
@@ -125,10 +141,17 @@ const Is = {
   },
   defined<T>(v: T | undefined): v is T {
     return typeof v !== 'undefined'
+  },
+  sameNode(a: VNode, b: VNode) {
+    return a.type === b.type && a.name === b.name && a.key === b.key
   }
 }
 
-export function h(name: string | typeof Component, attributes: null | {[k: string]: any}, ...args: Child[]): VNode {
+export interface ComponentConstructor<P = {}> {
+  new (props: P, context?: any): Component<P>
+}
+
+export function h(name: string | ComponentConstructor, attributes: null | {[k: string]: any}, ...args: Child[]): VNode {
   let children: VNode[] = []
   let rest: Child[] = []
   let len = arguments.length
@@ -187,22 +210,30 @@ function diffProps(prevProps: Attributes | null, nextProps: Attributes | null): 
   }
   nextProps = { ...nextProps }
   for (const key in prevProps) {
-    if (!Is.defined(nextProps[key])) {
+    const val = nextProps[key]
+    if (!Is.defined(val)) {
       nextProps[key] = null
+    } else if (val === prevProps[key]) { // only apply changes
+      nextProps[key] = undefined
     }
-    const val = prevProps[key]
   }
   return nextProps
 }
 
-export function patch<Node>(parent: Node, element: Node, oldNode: VNode | undefined, node: VNode, api: DOMApi<Node>) {
+export function insertChild<Node>(parent: Node, i: number, vnode: VNode, api: ICustomAPI<Node>) {
+  let newChildEl = api.createElement(vnode)
+  api.insertAt(parent, newChildEl, i)
+  mountComp(parent, newChildEl, vnode, api)
+  return newChildEl
+}
+
+export function patch<Node>(parent: Node, element: Node, oldNode: VNode | undefined, node: VNode, api: ICustomAPI<Node>) {
   if (node === oldNode) {
     return element
   }
   const replaceNode = () => {
     const newElement = api.createElement(node)
-    api.insertBefore(parent, newElement, element)
-    api.removeChild(parent, element)
+    api.replaceChild(parent, newElement, element)
     mountComp(parent, element, node, api)
     return newElement
   }
@@ -213,7 +244,7 @@ export function patch<Node>(parent: Node, element: Node, oldNode: VNode | undefi
     oldNode.type === VNodeType.text &&
     node.type === VNodeType.text
   ) {
-    api.setTextContent(parent, (node as TextVNode).name)
+    api.setTextContent(parent, node.name)
     return element
   } else if (
     oldNode.type === VNodeType.text ||
@@ -233,86 +264,120 @@ export function patch<Node>(parent: Node, element: Node, oldNode: VNode | undefi
     }
     attributes['children'] = node.children
     comp.props = attributes
-    comp.ctx.render()
+    comp.render()
   } else {
     api.setAttributes(element, diffProps(oldNode.attributes, attributes))
-    updateChildren(element, oldNode.children, node.children, api)
+    let update =
+      Is.defined(api.updateChildren)
+      ? api.updateChildren
+      : updateChildren
+    update(element, oldNode.children, node.children, api)
   }
 }
 
-function updateChildren<Node>(element: Node, oldChildren: VNode[], children: VNode[], api: DOMApi<Node>) {
-  let oldKeyed = {} as {[k: string]: [number, VNode, Node]}
-  for (let i = 0; i < oldChildren.length; i++) {
+// import * as util from 'util'
+function print(msg, ...objs: any[]) {
+  const util = require('util')
+  console.log(msg, ...objs.map(obj => util.inspect(obj, {
+    colors: true,
+    depth: null,
+  })))
+}
+
+function updateChildren<Node>(element: Node, oldChildren: VNode[], children: VNode[], api: ICustomAPI<Node>) {
+  let oldStartIdx = 0
+  let oldEndIdx = oldChildren.length - 1
+  let newStartIdx = 0
+  let newEndIdx = children.length - 1
+
+  const patchChild = (i: number, oldVnode: VNode | undefined, vnode: VNode) => {
+    let childEl = api.getChildAt(element, i)!
+    return patch<Node>(element, childEl, oldVnode, vnode, api)
+  }
+  while (
+    oldStartIdx <= oldEndIdx &&
+    newStartIdx <= newEndIdx
+  ) {
+    let oldStart = oldChildren[oldStartIdx]
+    let oldEnd = oldChildren[oldEndIdx]
+    let newStart = children[newStartIdx]
+    let newEnd = children[newEndIdx]
+    if (Is.sameNode(oldStart, newStart)) {
+      patchChild(oldStartIdx, oldStart, newStart)
+      oldStartIdx++
+      newStartIdx++
+    } else if (Is.sameNode(oldEnd, newEnd)) {
+      patchChild(oldEndIdx, oldEnd, newEnd)
+      oldEndIdx--
+      newEndIdx--
+    } else {
+      break
+    }
+  }
+
+  let oldKeyed = {} as {[k: string]: [VNode, Node]}
+  for (let i = oldStartIdx; i <= oldEndIdx; i++) {
     let child = oldChildren[i]
-    if (
-      child.type === VNodeType.element &&
-      Is.defined(child.key)
-    ) {
+    if (Is.defined(child.key)) {
       const oldEl = api.getChildAt(element, i)
       if (Is.defined(oldEl)) {
-        oldKeyed[child.key] = [i, child, oldEl]
+        oldKeyed[child.key] = [child, oldEl]
       }
     }
   }
-  for (let i = 0; i < children.length; i++) {
-    let oldChild = oldChildren[i] as VNode | undefined
-    let child = children[i]
-    let childEl = api.getChildAt(element, i)
-    const patchChild = () => {
-      if (Is.defined(childEl)) {
-        patch<Node>(element, childEl, oldChild, child, api)
-      } else {
-        let newChildEl = api.createElement(child)
-        api.appendChild(element, newChildEl)
-        mountComp(element, newChildEl, child, api)
-      }
-    }
-    if (
-      child.type === VNodeType.element &&
-      Is.defined(child.key)
-    ) {
-      let old = oldKeyed[child.key] as [number, VNode, Node] | undefined
-      if (!old) {
-        patchChild()
-        break
-      }
-      // FIXME: oldIdx is changed
-      let [oldIdx, oldNode, oldEl] = old
-      if (oldIdx === i) {
-        patchChild()
-      } else {
-        api.removeChildAt(element, oldIdx)
-        if (Is.defined(childEl)) {
-          api.insertBefore(element, oldEl, childEl)
-        } else {
-          api.appendChild(element, oldEl)
-        }
-      }
+  for (; newStartIdx <= newEndIdx; newStartIdx++, oldStartIdx++) {
+    let child = children[newStartIdx]
+    if (oldStartIdx > oldEndIdx) {
+      insertChild(element, oldStartIdx, child, api)
+      oldEndIdx++
     } else {
-      patchChild()
+      if (
+        Is.defined(child.key) &&
+        oldKeyed[child.key]
+      ) {
+        // insert keyed
+        let [oldChild, oldEl] = oldKeyed[child.key]
+
+        // hack: dom.insertBefore would move element, but we need to support pixi objects.
+        let added = api.insertAt(element, oldEl, newStartIdx)
+        patchChild(newStartIdx, oldChild, child)
+        oldEndIdx += added
+      } else {
+        // replace
+        patchChild(newStartIdx, void 0, child)
+      }
     }
   }
-  let newLen = api.getChildren(element).length
-  for (let i = children.length; i < newLen; i++) {
-    api.removeChildAt(element, i)
+  let start = newEndIdx + 1
+  for (let i = start; i <= oldEndIdx; i++) {
+    let comp = api.getComponent(api.getChildAt(element, start)!)
+    api.removeChildAt(element, start)
+    if (Is.defined(comp)) {
+      comp.onUnmount()
+      ;(comp._$internals as any) = null
+      comp.rootElement = null
+    }
   }
 }
-const NodeKey = '__node'
-const ComponentKey = '__component'
-export function render<Node>(node: VNode, container: Node, api: DOMApi<Node>) {
+export function render<Node>(node: VNode, container: Node, api: ICustomAPI<Node>) {
+  const NodeKey = '##__node'
   let child = api.getChildAt(container, 0)
-  if (!child) {
-    child = api.createElement(node)
-    api.appendChild(container, child)
-    mountComp(container, child, node, api)
+  if (!Is.defined(child)) {
+    child = insertChild(container, 0, node, api)
+    container[NodeKey] = node
   }
-  let oldNode: VNode | undefined = child[NodeKey]
-  child[NodeKey] = node
-  return patch(container, child, oldNode, node, api)
+  let oldNode: VNode | undefined = container[NodeKey]
+  container[NodeKey] = node
+  return patch<Node>(container, child, oldNode, node, api)
 }
-export const domApi: DOMApi<Node> = {
+
+const ComponentKey = '##__component'
+export const domApi: ICustomAPI<Node> = {
   getComponent(node) {
     return node[ComponentKey]
+  },
+  setComponent(node, comp) {
+    node[ComponentKey] = comp
   },
   createElement(node): Node {
     switch (node.type) {
@@ -331,18 +396,12 @@ export const domApi: DOMApi<Node> = {
         return el
       case VNodeType.component:
         let comp: Component = new node.name()
-        comp.props = node.attributes
-        let view = comp.ctx.view(comp.ctx.state, comp.ctx.actions)
-        if (view && typeof view !== 'boolean') {
-          let el = domApi.createElement(view)
-          el[ComponentKey] = comp
-          comp._$rootElement = el
-          return el
-        }
-        return document.createTextNode('')
-      case VNodeType.fragment:
-        let f = document.createDocumentFragment()
-        return f
+        comp.props = { ...node.attributes }
+        comp.props['children'] = node.children
+        let view = comp.render()
+        const rootEl = this._internals.nativeApi.createElement(view)
+        this._internals.nativeApi.setComponent(this.rootElement, this)
+        return comp.rootElement
       default:
         return Hydux.never(node)
     }
@@ -352,41 +411,39 @@ export const domApi: DOMApi<Node> = {
       for (const key in attrs) {
         let val = attrs[key]
 
-        if (Is.fn(val)) {
-          continue
+        if (Is.fn(val) || !Is.defined(val)) {
+          // ignore
+        } else if (val == null || val === false) {
+          (node as HTMLElement).removeAttribute(key)
         } else if (key === 'style') {
           Object.assign((node as HTMLElement).style, val)
-          continue
+        } else if (key in node && key !== 'list' && !('ownerSVGElement' in node)) {
+          node[key] = val == null ? '' : val
+        } else {
+          (node as HTMLElement).setAttribute(key, val)
         }
-        if (val == null) {
-          val = ''
-        }
-        (node as HTMLElement).setAttribute(key, val)
       }
     }
   },
   insertAt(parentNode, newNode, i) {
-    const node = parentNode.childNodes[i]
-    parentNode.insertBefore(newNode, node)
+    let len = parentNode.childNodes.length
+    if (i < parentNode.childNodes.length) {
+      const node = parentNode.childNodes[i]
+      parentNode.insertBefore(newNode, node)
+    } else {
+      parentNode.appendChild(newNode)
+    }
+    return parentNode.childNodes.length - len
   },
-  insertBefore(parentNode, newNode, node) {
-    parentNode.insertBefore(newNode, node)
+  replaceChild(parentNode, newNode, node) {
+    parentNode.replaceChild(newNode, node)
   },
   getChildAt(node, i) {
     return node.childNodes[i]
   },
-  getChildren(node) {
-    return [].concat.call(node.childNodes)
-  },
-  removeChild(node, child) {
-    return node.removeChild(child)
-  },
   removeChildAt(node, i) {
     let child = node.childNodes[i]
     return node.removeChild(child)
-  },
-  appendChild(node, child) {
-    node.appendChild(child)
   },
   setTextContent(node, text) {
     (node as HTMLElement).innerText = text

@@ -9,6 +9,7 @@
     "build": "del lib && tsc",
     "build:dist": "webpack -p --progress --profile",
     "test": "mocha --require ts-node/register \"src/test/**/*.test.ts\"",
+    "nyc": "nyc --extension .tsx --extension .ts --require ts-node/register -r html npm run test",
     "test:watch": "npm run test -- -w --watch-extensions ts,tsx",
     "doc": "typedoc --theme minimal --out ./docs --exclude ./test ./src && touch ./docs/.nojekyll",
     "preversion": "npm run build && npm run build:dist && git add -A"
@@ -45,13 +46,14 @@
     "del-cli": "^1.1.0",
     "jsdom": "^11.10.0",
     "mocha": "^4.0.1",
+    "nyc": "^11.8.0",
     "power-assert": "^1.4.4",
     "pre-commit": "^1.2.2",
     "ts-node": "^6.0.3",
-    "tslint": "^5.8.0",
+    "tslint": "^5.10.0",
     "tslint-config-standard": "^7.0.0",
     "typedoc": "^0.9.0",
-    "typescript": "^2.6.2",
+    "typescript": "^2.8.3",
     "webpack": "^3.10.0"
   },
   "dependencies": {
