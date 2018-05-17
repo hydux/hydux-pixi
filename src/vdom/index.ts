@@ -35,6 +35,7 @@ export abstract class Component<P = any> {
   _$internals: {
     parentElement: any
     nativeApi: any
+    isVdomComponent: true
   }
   onMount() {
     // ignore
@@ -139,6 +140,13 @@ const Is = {
   fn(v: any): v is Function {
     return typeof v === 'function'
   },
+  comp(v: any): v is ComponentConstructor {
+    return Is.defined((v as Component)._$internals) &&
+      (v as Component)._$internals.isVdomComponent
+  },
+  str(v: any): v is string {
+    return typeof v === 'string'
+  },
   defined<T>(v: T | undefined): v is T {
     return typeof v !== 'undefined'
   },
@@ -151,7 +159,7 @@ export interface ComponentConstructor<P = {}> {
   new (props: P, context?: any): Component<P>
 }
 
-export function h(name: string | ComponentConstructor, attributes: null | {[k: string]: any}, ...args: Child[]): VNode {
+export function h(name: string | ComponentConstructor | Function, attributes: null | {[k: string]: any}, ...args: Child[]): VNode {
   let children: VNode[] = []
   let rest: Child[] = []
   let len = arguments.length
@@ -185,20 +193,28 @@ export function h(name: string | ComponentConstructor, attributes: null | {[k: s
     delete attributes.key
     delete attributes.ref
   }
-  let node: ComponentVNode<any> | ElementVNode =
-    typeof name === 'string'
-    ? {
+  let node: ComponentVNode<any> | ElementVNode
+  if (Is.str(name)) {
+    node = {
       type: VNodeType.element,
       name,
       attributes,
       children,
     }
-    : {
+  } else if (Is.comp(name)) {
+    node = {
       type: VNodeType.component,
       name,
       attributes,
       children,
     }
+  } else {
+    if (children.length > 0) {
+      attributes = attributes || {}
+      attributes['children'] = children
+    }
+    node = name(attributes)
+  }
   if (key) node.key = key
   if (ref) node.ref = ref
   return node
