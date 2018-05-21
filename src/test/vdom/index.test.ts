@@ -1,4 +1,5 @@
-import { render, domApi, h } from '../../vdom'
+import { render, h } from '../../vdom'
+import domApi from '../../vdom/dom-api'
 import * as assert from 'assert'
 import * as fs from 'fs'
 import * as Utils from './utils'

@@ -1,4 +1,5 @@
-import { VNode, render, domApi } from '../../vdom'
+import { VNode, render } from '../../vdom'
+import domApi from '../../vdom/dom-api'
 import * as assert from 'assert'
 
 const jsdom = require('jsdom')
@@ -18,7 +19,7 @@ export function testTrees(name: string, trees: RenderTree[]) {
     trees.map(tree => {
       console.log(tree.html)
       render(tree.node, document.body, domApi)
-      // assert.equal(document.body.innerHTML, tree.html.replace(/\s{2,}/g, ''))
+      assert.equal(document.body.innerHTML, tree.html.replace(/\s{2,}/g, ''))
       tree.assert && tree.assert()
     })
     done()
