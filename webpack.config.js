@@ -9,7 +9,7 @@ const DIST = `${__dirname}/static/dist`
 
 module.exports = {
   entry: {
-    'data': "./src/index.tsx",
+    'pixi': "./src/index.tsx",
   },
   output: {
       filename: "hydux.[name].js",

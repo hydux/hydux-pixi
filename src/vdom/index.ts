@@ -13,6 +13,15 @@ export const VNodeType = {
 const vnodeTypes = Object.keys(VNodeType).map(k => VNodeType[k])
 export const flatten1 = <T>(args: (T | T[])[]) => ([] as T[]).concat(...args)
 
+const ComponentKey = '@hydux-pixi/component'
+export function getComponent<Node>(node: Node) {
+  return node[ComponentKey]
+}
+
+export function setComponent<Node>(params: Node, comp: Component) {
+  params[ComponentKey] = comp
+}
+
 export function mountComp<Node>(vnode: VNode, api: ICustomAPI<Node>, element?: Node) {
   if (vnode.type === VNodeType.component) {
     let comp: Component = new vnode.name()
@@ -32,7 +41,7 @@ export function mountComp<Node>(vnode: VNode, api: ICustomAPI<Node>, element?: N
       view = comp.render()
     }
     comp._$internals.lastView = view
-    api.setComponent(element, comp)
+    setComponent(element, comp)
     if (Is.def(vnode.ref)) vnode.ref(comp)
     try {
       comp.onMount() // TODO: try/catch
@@ -128,8 +137,6 @@ export type VNode =
 | TextVNode
 export interface ICustomAPI<Node> {
   updateChildren?: (element: Node, oldChildren: VNode[], children: VNode[], api: ICustomAPI<Node>) => void
-  getComponent(node: Node): Component | undefined
-  setComponent(node: Node, comp: Component): void
   createElement(node?: VNode): Node
   setAttributes(node: Node, attrs: { [k: string]: any } | null): void
   /**
@@ -284,7 +291,7 @@ export function patch<Node>(
       api.insertAt(parent, newElement, index)
     } else {
       api.replaceChild(parent, newElement, element)
-      let comp = api.getComponent(element)
+      let comp = getComponent(element)
       if (comp) {
         try {
           comp.onUnmount()
@@ -316,7 +323,7 @@ export function patch<Node>(
   if (
     node.type === VNodeType.component
   ) {
-    let comp = api.getComponent(element)
+    let comp = getComponent(element)
     if (!comp) {
       return replaceNode()
     }
@@ -360,7 +367,7 @@ function unMountComponents<Node>(element: Node | undefined, api: ICustomAPI<Node
     const child = api.getChildAt(element, i)
     unMountComponents(child, api)
   }
-  let comp = api.getComponent(element)
+  let comp = getComponent(element)
   if (Is.def(comp)) {
     try {
       comp.onUnmount()
@@ -442,7 +449,7 @@ function updateChildren<Node>(element: Node, oldChildren: VNode[], children: VNo
   }
 }
 export function render<Node>(node: VNode, container: Node, api: ICustomAPI<Node>) {
-  const NodeKey = '##__node'
+  const NodeKey = '@hydux-pixi/node'
   let oldNode: VNode | undefined = container[NodeKey]
   container[NodeKey] = node
   return patch<Node>(container, 0, oldNode, node, api)

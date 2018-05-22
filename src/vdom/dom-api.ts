@@ -1,14 +1,9 @@
-import { VNodeType, ICustomAPI, mountComp, Is, flatten1 } from './'
+import { VNodeType, ICustomAPI, mountComp, Is, flatten1, setComponent, getComponent,
+} from './'
 import * as Hydux from 'hydux'
 
 export const ComponentKey = '##__component'
 export const domApi: ICustomAPI<Node> = {
-  getComponent(node) {
-    return node[ComponentKey]
-  },
-  setComponent(node, comp) {
-    node[ComponentKey] = comp
-  },
   createElement(node): Node {
     if (!Is.def(node)) {
       return document.createElement('')

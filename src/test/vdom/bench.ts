@@ -1,14 +1,13 @@
 import _ from 'lodash'
 import process from 'process';
 const bc = require('benchmark')
-const Benchmark = bc.runInContext({ _, process });
+const Benchmark = bc.runInContext({ _, process })
 window['Benchmark'] = Benchmark;
 import * as pixi from 'pixi.js'
 
 const Sprite = pixi.Sprite
 const TextureCache = pixi.utils.TextureCache
 const resources = pixi.loader.resources
-
 
 let type = pixi.utils.isWebGLSupported() ? 'WebGL' : 'canvas'
 
@@ -127,6 +126,12 @@ window['start'] = function start() {
     .add('set', function() {
       sp.height = 100
     })
+    .add('fn', function() {
+      let a = function () { return 1 }
+    })
+    .add('lambda', function() {
+      let a = () => 1
+    })
     .add('empty', function() {
     })
     // run async
@@ -136,19 +141,18 @@ window['start'] = function start() {
 // 循环比较 / unshift ~= 30
 //
 /*
-Start Suit: base ops
-new pixi.Sprite() x 1,039,744 ops/sec ±1.47% (59 runs sampled)
-new pixi.Sprite(texture) x 1,072,376 ops/sec ±2.67% (55 runs sampled)
-new pixi.Container x 2,078,432 ops/sec ±2.47% (58 runs sampled)
-fori x 89,154,059 ops/sec ±1.56% (57 runs sampled)
-splice x 871,640 ops/sec ±1.05% (59 runs sampled)
-unshift x 3,598,394 ops/sec ±0.88% (58 runs sampled)
-copy x 482,108 ops/sec ±2.83% (36 runs sampled)
-compare x 826,539,219 ops/sec ±0.84% (59 runs sampled)
-set x 116,375,890 ops/sec ±1.81% (60 runs sampled)
-empty x 829,68,5620 ops/sec ±0.84% (59 runs sampled)
-Fastest is empty,get
-
-Conclusion:
-  `new Sprite` + splice is very fast, the fatest diff algorithm(O(nlogn)) is not suitable in pixi, prefix/suffix optimize + O(n)-diffing is enough.
+new pixi.Sprite() x 1,045,186 ops/sec ±4.28% (60 runs sampled)
+bench.js:20970 new pixi.Sprite(texture) x 1,103,903 ops/sec ±4.29% (60 runs sampled)
+bench.js:20970 new pixi.Container x 1,663,066 ops/sec ±3.01% (60 runs sampled)
+bench.js:20970 new empty x 544,866,859 ops/sec ±2.21% (59 runs sampled)
+bench.js:20970 fori x 6,864,824 ops/sec ±0.76% (63 runs sampled)
+bench.js:20970 splice x 3,846,711 ops/sec ±0.52% (56 runs sampled)
+bench.js:20970 unshift x 6,327,734 ops/sec ±2.30% (63 runs sampled)
+bench.js:20970 copy x 4,966,878 ops/sec ±1.72% (62 runs sampled)
+bench.js:20970 compare x 557,024,065 ops/sec ±2.35% (45 runs sampled)
+bench.js:20970 set x 92,983,738 ops/sec ±0.84% (64 runs sampled)
+bench.js:20970 fn x 63,432,165 ops/sec ±2.01% (62 runs sampled)
+bench.js:20970 lambda x 64,968,597 ops/sec ±0.75% (62 runs sampled)
+bench.js:20970 empty x 562,940,133 ops/sec ±2.87% (47 runs sampled)
+bench.js:20973 Fastest is empty
 */

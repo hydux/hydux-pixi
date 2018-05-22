@@ -1,4 +1,8 @@
-import { VNodeType, ICustomAPI, mountComp, h, Is as _Is, flatten1, Component } from './'
+import {
+  VNodeType, ICustomAPI, mountComp, h,
+  Is as _Is, flatten1, Component,
+  setComponent, getComponent,
+} from './'
 import * as Hydux from 'hydux'
 import * as pixi from 'pixi.js'
 
@@ -6,43 +10,29 @@ const Is = {
   ..._Is,
   pixiComp(v: any): v is PIXIComponentClass {
     if (!Is.def(v)) return false
-    let proto: InstanceType<PIXIComponentClass> = v.prototype
+    let proto: PIXIComponent = v.prototype
     return Is.def(proto.isPIXIComponent) && proto.isPIXIComponent()
   }
 }
 
-export type PIXIComponentClass = ReturnType<typeof makePIXIComponent>
+export type PIXIComponentClass = typeof PIXIComponent
 
-export function makePIXIComponent<P = any>({
-  create,
-  update,
-}: {
-  create: (props: P) => pixi.DisplayObject,
-  update: (node: pixi.DisplayObject, props: P) => void
-}) {
-  return class PIXIComponent extends Component<P> {
-    create = create
-    update = update
+export abstract class PIXIComponent<P = any, Node = pixi.DisplayObject> extends Component<P> {
+  rootElement: Node
+  abstract create(props: P): Node
+  abstract update(node: Node, props: P): void
 
-    isPIXIComponent() {
-      return true
-    }
+  isPIXIComponent() {
+    return true
+  }
 
-    render() {
-      this.props['__rootElement'] = this.rootElement
-      return h('builtin', this.props, this.props['children'])
-    }
+  render() {
+    this.props['@rootElement'] = this.rootElement
+    return h('builtin', this.props, this.props['children'])
   }
 }
 
-export const ComponentKey = '##__component'
 export const domApi: ICustomAPI<pixi.DisplayObject> = {
-  getComponent(node) {
-    return node[ComponentKey]
-  },
-  setComponent(node, comp) {
-    node[ComponentKey] = comp
-  },
   createElement(node) {
     if (!Is.def(node)) {
       return new pixi.Container()
@@ -52,7 +42,7 @@ export const domApi: ICustomAPI<pixi.DisplayObject> = {
         return new pixi.Text(node.name)
       case VNodeType.element:
         if (node.name === 'builtin') {
-          const { __rootElement: rootEl, ...attrs } = node.attributes as any
+          const { '@rootElement': rootEl, ...attrs } = node.attributes as any
           domApi.setAttributes(rootEl, node)
           flatten1(
             node.children
@@ -69,6 +59,7 @@ export const domApi: ICustomAPI<pixi.DisplayObject> = {
         let rootEl
         if (Is.pixiComp(node.name)) {
           rootEl = node.name.prototype.create(node.attributes)
+          node.name.prototype.update(rootEl, node.attributes)
         }
         return mountComp(node, domApi, rootEl)
       default:
@@ -76,7 +67,7 @@ export const domApi: ICustomAPI<pixi.DisplayObject> = {
     }
   },
   setAttributes(node, attrs) {
-    const comp = domApi.getComponent(node) as InstanceType<PIXIComponentClass>
+    const comp = getComponent(node) as PIXIComponent
     comp.update(node, attrs || {})
   },
   insertAt(parentNode: pixi.Container, newNode: pixi.Container, i) {
