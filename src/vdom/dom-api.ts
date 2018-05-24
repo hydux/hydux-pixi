@@ -2,7 +2,6 @@ import { VNodeType, ICustomAPI, mountComp, Is, flatten1, setComponent, getCompon
 } from './'
 import * as Hydux from 'hydux'
 
-export const ComponentKey = '##__component'
 export const domApi: ICustomAPI<Node> = {
   createElement(node): Node {
     if (!Is.def(node)) {
@@ -13,7 +12,9 @@ export const domApi: ICustomAPI<Node> = {
         return document.createTextNode(node.name)
       case VNodeType.element:
         const el = document.createElement(node.name)
-        domApi.setAttributes(el, node.attributes)
+        if (node.attributes !== null) {
+          domApi.setAttributes(el, node.attributes)
+        }
         flatten1<Node>(
           node.children
           .map(domApi.createElement)
@@ -39,7 +40,14 @@ export const domApi: ICustomAPI<Node> = {
           (node as HTMLElement).removeAttribute(key)
         } else if (key === 'style') {
           Object.assign((node as HTMLElement).style, val)
-        } else if (key in node && key !== 'list' && !('ownerSVGElement' in node)) {
+        } else if (
+          (key in node || (
+            key[0] === 'o' &&
+            key[1] === 'n'
+          )) &&
+          key !== 'list' &&
+          !('ownerSVGElement' in node)
+        ) {
           node[key] = val == null ? '' : val
         } else {
           (node as HTMLElement).setAttribute(key, val)
@@ -74,7 +82,7 @@ export const domApi: ICustomAPI<Node> = {
     return node.removeChild(child)
   },
   setTextContent(node, text) {
-    (node as HTMLElement).innerText = text
+    (node as Text).data = text
   }
 }
 

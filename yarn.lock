@@ -3140,6 +3140,10 @@ pixi-gl-core@^1.1.4:
   version "1.1.4"
   resolved "http://registry.npm.taobao.org/pixi-gl-core/download/pixi-gl-core-1.1.4.tgz#8b4b5c433b31e419bc379dc565ce1b835a91b372"
 
+pixi-particles@^3.0.0:
+  version "3.0.0"
+  resolved "http://registry.npm.taobao.org/pixi-particles/download/pixi-particles-3.0.0.tgz#72394f19d9d81c224d3eb0ad4af3786bf23bdd44"
+
 pixi.js@^4.7.3:
   version "4.7.3"
   resolved "http://registry.npm.taobao.org/pixi.js/download/pixi.js-4.7.3.tgz#46565cd013275f072da839e108184ad92b853745"

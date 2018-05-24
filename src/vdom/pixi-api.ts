@@ -1,7 +1,7 @@
 import {
   VNodeType, ICustomAPI, mountComp, h,
   Is as _Is, flatten1, Component,
-  setComponent, getComponent,
+  setComponent, getComponent, RenderReturn
 } from './'
 import * as Hydux from 'hydux'
 import * as pixi from 'pixi.js'
@@ -17,7 +17,7 @@ const Is = {
 
 export type PIXIComponentClass = typeof PIXIComponent
 
-export abstract class PIXIComponent<P = any, Node = pixi.DisplayObject> extends Component<P> {
+export abstract class PIXIComponent<P = {}, Node = pixi.DisplayObject> extends Component<P> implements Component<P> {
   rootElement: Node
   abstract create(props: P): Node
   abstract update(node: Node, props: P): void
@@ -32,8 +32,9 @@ export abstract class PIXIComponent<P = any, Node = pixi.DisplayObject> extends 
   }
 }
 
-export const domApi: ICustomAPI<pixi.DisplayObject> = {
+export const api: ICustomAPI<pixi.DisplayObject> = {
   createElement(node) {
+    console.log('createElement', node)
     if (!Is.def(node)) {
       return new pixi.Container()
     }
@@ -43,13 +44,13 @@ export const domApi: ICustomAPI<pixi.DisplayObject> = {
       case VNodeType.element:
         if (node.name === 'builtin') {
           const { '@rootElement': rootEl, ...attrs } = node.attributes as any
-          domApi.setAttributes(rootEl, node)
+          api.setAttributes(rootEl, node)
           flatten1(
             node.children
-            .map(domApi.createElement)
+            .map(api.createElement)
           )
           .forEach(child => {
-            domApi.insertAt(rootEl, child, domApi.getChildCount(rootEl))
+            api.insertAt(rootEl, child, api.getChildCount(rootEl))
           })
           return rootEl
         } else {
@@ -58,17 +59,28 @@ export const domApi: ICustomAPI<pixi.DisplayObject> = {
       case VNodeType.component:
         let rootEl
         if (Is.pixiComp(node.name)) {
-          rootEl = node.name.prototype.create(node.attributes)
-          node.name.prototype.update(rootEl, node.attributes)
+          rootEl = node.name.prototype.create(node.attributes || {})
+          if (node.attributes !== null) {
+            node.name.prototype.update(rootEl, node.attributes)
+          }
+          flatten1(
+            node.children
+            .map(api.createElement)
+          )
+          .forEach(child => {
+            api.insertAt(rootEl, child, api.getChildCount(rootEl))
+          })
+        } else {
+          console.error('strange')
         }
-        return mountComp(node, domApi, rootEl)
+        return mountComp(node, api, rootEl)
       default:
         return Hydux.never(node)
     }
   },
   setAttributes(node, attrs) {
     const comp = getComponent(node) as PIXIComponent
-    comp.update(node, attrs || {})
+    comp.update(node, attrs)
   },
   insertAt(parentNode: pixi.Container, newNode: pixi.Container, i) {
     parentNode.addChildAt(newNode, i)
@@ -80,6 +92,9 @@ export const domApi: ICustomAPI<pixi.DisplayObject> = {
     parentNode.addChildAt(newNode, i)
   },
   getChildAt(node: pixi.Container, i) {
+    if (node.children.length <= i) {
+      return undefined
+    }
     return node.getChildAt(i)
   },
   getChildCount(node: pixi.Container) {
@@ -91,13 +106,9 @@ export const domApi: ICustomAPI<pixi.DisplayObject> = {
   removeChildAt(node: pixi.Container, i) {
     return node.removeChildAt(i)
   },
-  setTextContent(node: pixi.Container, text) {
-    let child = node.getChildAt(0)
-    if (child instanceof pixi.Text) {
-      child.text = text
-    } else {
-      node.removeChildren(0, node.children.length)
-      node.addChild(new pixi.Text(text))
-    }
+  setTextContent(node: pixi.Text, text) {
+    node.text = text
   }
 }
+
+export default api

@@ -1,6 +1,7 @@
 import * as Hydux from 'hydux'
 
 export type Attributes = {
+  key?: Key
   [k: string]: any
 }
 
@@ -24,11 +25,11 @@ export function setComponent<Node>(params: Node, comp: Component) {
 
 export function mountComp<Node>(vnode: VNode, api: ICustomAPI<Node>, element?: Node) {
   if (vnode.type === VNodeType.component) {
-    let comp: Component = new vnode.name()
-    comp.props = { ...vnode.attributes }
-    comp.props['children'] = vnode.children
+    const props = { ...vnode.attributes }
+    props['children'] = vnode.children
+    let comp: Component = new vnode.name(props)
     comp._$internals.nativeApi = api
-    let view = null as any
+    let view = null as RenderReturn
     if (!Is.def(element)) {
       view = comp.render()
       element =
@@ -54,13 +55,18 @@ export function mountComp<Node>(vnode: VNode, api: ICustomAPI<Node>, element?: N
   throw new Error('vnode is not component')
 }
 
-export abstract class Component<P = any> {
+export type RenderReturn = VNode | null | boolean | undefined
+
+export abstract class Component<P = {}> {
   props: P
   rootElement: any
   _$internals: {
     nativeApi: ICustomAPI<any>
     lastView: any
   } = {} as any
+  constructor(props) {
+    this.props = props
+  }
   isComponent() {
     return true
   }
@@ -73,8 +79,9 @@ export abstract class Component<P = any> {
   shouldRender(nextProps: P): boolean {
     return true
   }
-  render(): any {
+  render(): RenderReturn {
     // ignore
+    return null
   }
 }
 
@@ -109,20 +116,21 @@ export abstract class HyduxComponent<P = any, S = any> extends Component<P> {
 }
 
 export type VNodeType = (typeof VNodeType)[keyof (typeof VNodeType)]
+export type Key = string | number
 export type Ref = (node: any) => void
 export interface BaseVNode {
   children: VNode[]
-  key?: string | number
+  key?: Key
   ref?: Ref
 }
 export interface ElementVNode extends BaseVNode {
   type: typeof VNodeType.element
-  attributes: {[k: string]: any} | null
+  attributes: Attributes | null
   name: string
 }
 export interface ComponentVNode<T extends typeof Component> extends BaseVNode {
   type: typeof VNodeType.component
-  attributes: {[k: string]: any} | null
+  attributes: Attributes | null
   name: T
 }
 export interface TextVNode {
@@ -138,7 +146,7 @@ export type VNode =
 export interface ICustomAPI<Node> {
   updateChildren?: (element: Node, oldChildren: VNode[], children: VNode[], api: ICustomAPI<Node>) => void
   createElement(node?: VNode): Node
-  setAttributes(node: Node, attrs: { [k: string]: any } | null): void
+  setAttributes(node: Node, attrs: { [k: string]: any }): void
   /**
    *
    * @param parentNode
@@ -188,10 +196,21 @@ export const Is = {
 }
 
 export interface ComponentConstructor<P = {}> {
+  displayName?: string
   new (props: P, context?: any): Component<P>
 }
+type RenderableProps<P, RefType = any> = Readonly<
+  P & Attributes & { children?: VNode[]; ref?: Ref }
+>
+export interface FunctionalComponent<P = {}> {
+  (props: P, context?: any): Child
+  displayName?: string
+  defaultProps?: Partial<P>
+}
 
-export function h(name: string | ComponentConstructor | Function, attributes: null | {[k: string]: any}, ...args: Child[]): VNode {
+type ComponentFactory<P> = ComponentConstructor<P> | FunctionalComponent<P>
+
+export function h<P>(name: string | ComponentFactory<P>, attributes: null | {[k: string]: any}, ...args: Child[]): VNode | undefined {
   let children: VNode[] = []
   let rest: Child[] = []
   let len = arguments.length
@@ -225,7 +244,7 @@ export function h(name: string | ComponentConstructor | Function, attributes: nu
     delete attributes.key
     delete attributes.ref
   }
-  let node: ComponentVNode<any> | ElementVNode
+  let node: VNode
   if (Is.str(name)) {
     node = {
       type: VNodeType.element,
@@ -245,10 +264,14 @@ export function h(name: string | ComponentConstructor | Function, attributes: nu
       attributes = attributes || {}
       attributes['children'] = children
     }
-    node = name(attributes)
+    const n = name(attributes || {} as any)
+    if (!Is.vnode(n)) {
+      return
+    }
+    node = n
   }
   if (key) node.key = key
-  if (ref) node.ref = ref
+  if (ref && node.type !== VNodeType.text) node.ref = ref
   return node
 }
 
@@ -309,7 +332,7 @@ export function patch<Node>(
     oldNode.type === VNodeType.text &&
     node.type === VNodeType.text
   ) {
-    api.setTextContent(parent, node.name)
+    api.setTextContent(element, node.name)
     return element
   } else if (
     oldNode.type === VNodeType.text ||
@@ -340,7 +363,10 @@ export function patch<Node>(
       comp._$internals.lastView = view
     }
   } else {
-    api.setAttributes(element, diffProps(oldNode.attributes, attributes))
+    const attrs = diffProps(oldNode.attributes, attributes)
+    if (attrs !== null) {
+      api.setAttributes(element, attrs)
+    }
     let update =
       Is.def(api.updateChildren)
       ? api.updateChildren

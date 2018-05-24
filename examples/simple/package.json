@@ -14,6 +14,7 @@
     "lint": "tslint ./src/** --type-check -p ./tsconfig.json"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.109",
     "@types/node": "^8.0.55",
     "clean-webpack-plugin": "^0.1.17",
     "cross-env": "^5.1.1",
@@ -21,7 +22,7 @@
     "remotedev": "^0.2.7",
     "tslint": "^5.8.0",
     "tslint-config-standard": "^7.0.0",
-    "typescript": "^2.6.2",
+    "typescript": "^2.8.3",
     "webpack": "^3.10.0",
     "webpack-blocks": "^1.0.0-rc.2",
     "webpack-dev-server": "^2.9.5"

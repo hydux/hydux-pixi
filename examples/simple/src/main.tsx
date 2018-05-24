@@ -1,14 +1,39 @@
 import _app from 'hydux'
 import withPersist from 'hydux/lib/enhancers/persist'
-import withVdom, { React } from 'hydux/lib/enhancers/ultradom-render'
+import withVdom from '../../../src/index'
+import pixiApi from '../../../src/vdom/pixi-api'
 import { ActionsType } from 'hydux/lib/types'
 import './polyfill.js'
-import * as Counter from './counter'
+import * as Demo from './Demo'
+import * as pixi from 'pixi.js'
+import { onload } from './textures'
 
 // let app = withPersist<State, Actions>({
 //   key: 'time-game/v1'
 // })(_app)
-let app = withVdom<State, Actions>()(_app)
+
+pixi.utils.sayHello(pixi.utils.isWebGLSupported() ? 'WebGL' : 'canvas')
+let pixiApp = new pixi.Application({
+  width: 256,
+  height: 256,
+  antialias: true,
+  transparent: false,
+  resolution: 2,
+})
+pixiApp.renderer.autoResize = true
+pixiApp.renderer.resize(256, 256)
+
+pixiApp.renderer.view.style.position = 'absolute'
+pixiApp.renderer.view.style.display = 'block'
+pixiApp.renderer.autoResize = true
+// app.renderer.resize(window.innerWidth, window.innerHeight)
+let canvas = document.querySelector('canvas')
+if (canvas) {
+  canvas.remove()
+}
+document.body.appendChild(pixiApp.view)
+
+let app = withVdom<State, Actions, PIXI.DisplayObject>(pixiApp.stage, { api: pixiApi })(_app)
 
 if (process.env.NODE_ENV === 'development') {
   const devTools = require('hydux/lib/enhancers/devtools').default
@@ -20,22 +45,23 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const actions = {
-  counter1: Counter.actions,
+  demo: Demo.actions,
 }
 
 const state = {
-  counter1: Counter.init(),
+  demo: Demo.initState(),
 }
 
 type Actions = typeof actions
 type State = typeof state
-const view = (state: State) => (actions: Actions) =>
-    <main>
-      {Counter.view(state.counter1, actions.counter1)}
-    </main>
+const view = (state: State, actions: Actions) => Demo.view(state.demo, actions.demo)
 
-export default app({
-  init: () => state,
-  actions,
-  view,
+onload(() => {
+  app({
+    init: () => state,
+    actions,
+    view,
+  })
 })
+
+window['pixiApp'] = pixiApp

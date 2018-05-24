@@ -2,7 +2,7 @@ const webpack = require('webpack')
 const {
   createConfig, defineConstants, env, addPlugins,
   entryPoint, setOutput, sourceMaps,
-  customConfig, css, uglify
+  customConfig, css, uglify, file, match
 } = require('webpack-blocks')
 const typescript = require('@webpack-blocks/typescript')
 const devServer = require('@webpack-blocks/dev-server')
@@ -23,8 +23,11 @@ module.exports = createConfig([
   setOutput({
     filename: '[name].js',
     path: DIST,
-    publicPath: '/static/dist',
+    publicPath: '/static/dist/',
   }),
+  match(['*.gif', '*.jpg', '*.jpeg', '*.png', '*.webp', '*.eot', '*.svg', '*.ttf', '*.woff', '*.woff2', '*.json'], [
+    file()
+  ]),
   css(),
   typescript(),
   defineConstants({
@@ -87,9 +90,9 @@ module.exports = createConfig([
     sourceMaps(),
   ]),
   env('production', [
+    uglify(),
     addPlugins([
       new Clean(['dist'], {exclude: ['vendor.dll.js', 'vendor-manifest.json']}),
-      uglify(),
     ]),
     sourceMaps(),
   ]),
