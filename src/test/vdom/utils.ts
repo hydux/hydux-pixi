@@ -9,7 +9,7 @@ export const document = dom.window.document
 global['document'] = document
 
 export interface RenderTree {
-  node: VNode
+  node: VNode | undefined
   html: string
   assert?: () => void
 }
@@ -18,7 +18,7 @@ export function testTrees(name: string, trees: RenderTree[]) {
   it(name, done => {
     trees.map(tree => {
       console.log(tree.html)
-      render(tree.node, document.body, domApi)
+      render(tree.node!, document.body, domApi)
       assert.equal(document.body.innerHTML, tree.html.replace(/\s{2,}/g, ''))
       tree.assert && tree.assert()
     })

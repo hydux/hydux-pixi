@@ -340,7 +340,7 @@ describe('desc', () => {
         onclick(event) {
           //
         },
-      }),
+      })!,
       document.body,
       domApi,
     )

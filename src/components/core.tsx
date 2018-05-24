@@ -129,7 +129,7 @@ function addEvent(node: pixi.DisplayObject, type: 'on' | 'once', name: string, l
   }
 }
 
-export function updateContainer(node: pixi.Container, props: ContainerProps, skips?: Set<string>) {
+export function updateContainer(node: pixi.Container, key: string, val: any, props: ContainerProps) {
   const keys = Object.keys(props)
   let i = keys.length
   while (i--) {
@@ -147,21 +147,17 @@ export function updateContainer(node: pixi.Container, props: ContainerProps, ski
       } else {
         addEvent(node, 'on', key[2].toLowerCase() + key.slice(3), val)
       }
-    } else if (!Is.def(skips) || !skips.has(key)) {
+    } else {
       node[key] = val
     }
   }
 }
 
-function updatePropField<Node>(node: Node, props: object, keys: string[]) {
-  for (const key of keys) {
-    if (Is.def(props[key])) {
-      for (const k in props[key]) {
-        const styleVal = props[key][k]
-        if (styleVal !== node[key][k]) {
-          node[key][k] = styleVal
-        }
-      }
+function updateObjectProp<Node>(node: Node, key: string, val: object, props: object) {
+  for (const k in val) {
+    let v = val[k]
+    if (v !== node[key][k]) {
+      node[key][k] = v
     }
   }
 }
@@ -178,8 +174,8 @@ export class Stage extends PIXIComponent<StageProps, pixi.Container> {
   create(props: StageProps) {
     return this.app.stage
   }
-  update(node: pixi.Container, props: StageProps): void {
-    updateContainer(node, props)
+  update(node: pixi.Container, key: string, val: any, props: StageProps): void {
+    updateContainer(node, key, val, props)
   }
 }
 
@@ -187,8 +183,8 @@ export class Container extends PIXIComponent<ContainerProps, pixi.Container> {
   create(props: any) {
     return new pixi.Container()
   }
-  update(node: pixi.Container, props: ContainerProps): void {
-    updateContainer(node, props)
+  update(node: pixi.Container, key: string, val: any, props: ContainerProps): void {
+    updateContainer(node, key, val, props)
   }
 }
 
@@ -204,8 +200,8 @@ export class Sprite extends PIXIComponent<SpriteProps, pixi.Sprite> {
   create(props: any) {
     return new pixi.Sprite()
   }
-  update(node: pixi.Sprite, props: SpriteProps): void {
-    updateContainer(node, props)
+  update(node: pixi.Sprite, key: string, val: any, props: SpriteProps): void {
+    updateContainer(node, key, val, props)
   }
 }
 
@@ -217,8 +213,8 @@ export class Graphics extends PIXIComponent<GraphicsProps, pixi.Graphics> {
   create(props: any) {
     return new pixi.Graphics()
   }
-  update(node: pixi.Graphics, props: GraphicsProps): void {
-    updateContainer(node, props)
+  update(node: pixi.Graphics, key: string, val: any, props: GraphicsProps): void {
+    updateContainer(node, key, val, props)
     if (props.draw) {
       props.draw(node)
     }
@@ -238,8 +234,11 @@ export class Text extends PIXIComponent<TextProps, pixi.Text> {
   create(props: any) {
     return new pixi.Text()
   }
-  update(node: pixi.Text, props: TextProps): void {
-    updateContainer(node, props, Text._skipsSet)
-    updatePropField(node, props, Text._skips)
+  update(node: pixi.Text, key: string, val: any, props: TextProps): void {
+    if (Text._skipsSet.has(key)) {
+      updateObjectProp(node, key, val, props)
+    } else {
+      updateContainer(node, key, val, props)
+    }
   }
 }

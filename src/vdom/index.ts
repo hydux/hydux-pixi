@@ -15,50 +15,73 @@ const vnodeTypes = Object.keys(VNodeType).map(k => VNodeType[k])
 export const flatten1 = <T>(args: (T | T[])[]) => ([] as T[]).concat(...args)
 
 const ComponentKey = '@hydux-pixi/component'
-export function getComponent<Node>(node: Node) {
+export function getComponent<Node>(node: Node): Component | undefined {
   return node[ComponentKey]
 }
 
 export function setComponent<Node>(params: Node, comp: Component) {
   params[ComponentKey] = comp
 }
-
-export function mountComp<Node>(vnode: VNode, api: ICustomAPI<Node>, element?: Node) {
-  if (vnode.type === VNodeType.component) {
-    const props = { ...vnode.attributes }
-    props['children'] = vnode.children
-    let comp: Component = new vnode.name(props)
+/**
+ * Don't forget to call `mountComponents` after insert
+ * @param node
+ * @param api
+ */
+export function createElement<Node>(node: VNode, api: ICustomAPI<Node>): Node {
+  if (node.type === VNodeType.component) {
+    const props = { ...node.attributes }
+    props['children'] = node.children
+    let comp: Component = new node.name(props)
     comp._$internals.nativeApi = api
-    let view = null as RenderReturn
-    if (!Is.def(element)) {
-      view = comp.render()
-      element =
-        Is.vnode(view)
-        ? api.createElement(view)
-        : api.createElement()
-      comp.rootElement = element
-    } else {
-      comp.rootElement = element
-      view = comp.render()
-    }
+    let view = comp.render()
+    let element =
+      Is.vnode(view)
+      ? createElement(view, api)
+      : api.createElement()
+    comp.rootElement = element
     comp._$internals.lastView = view
     setComponent(element, comp)
-    if (Is.def(vnode.ref)) vnode.ref(comp)
+    if (Is.def(node.ref)) node.ref(comp)
+    return element
+  }
+  let element = api.createElement(node)
+  if (node.type === VNodeType.element) {
+    setAttributes(element, node.attributes, api)
+    for (const child of node.children) {
+      let el = createElement(child, api)
+      api.insertAt(element, el, api.getChildCount(element))
+      mountComponent(el)
+    }
+  }
+  return element
+}
+
+export function setAttributes<Node>(element: Node, attrs: {[k: string]: any} | null, api: ICustomAPI<Node>) {
+  if (attrs === null) return
+  for (const key in attrs) {
+    let val = attrs[key]
+    if (Is.def(val)) {
+      api.setAttribute(element, key, val, attrs)
+    }
+  }
+}
+
+function mountComponent<Node>(element: Node) {
+  let comp = getComponent(element)
+  if (Is.def(comp)) {
     try {
       comp.onMount() // TODO: try/catch
     } catch (error) {
       console.error(error)
     }
-    return element
   }
-  console.error(vnode)
-  throw new Error('vnode is not component')
 }
 
 export type RenderReturn = VNode | null | boolean | undefined
 
-export abstract class Component<P = {}> {
+export abstract class Component<P = {}, S = {}> {
   props: P
+  state: S
   rootElement: any
   _$internals: {
     nativeApi: ICustomAPI<any>
@@ -128,7 +151,7 @@ export interface ElementVNode extends BaseVNode {
   attributes: Attributes | null
   name: string
 }
-export interface ComponentVNode<T extends typeof Component> extends BaseVNode {
+export interface ComponentVNode<T extends typeof Component = any> extends BaseVNode {
   type: typeof VNodeType.component
   attributes: Attributes | null
   name: T
@@ -140,13 +163,13 @@ export interface TextVNode {
 }
 
 export type VNode =
-| ComponentVNode<any>
+| ComponentVNode
 | ElementVNode
 | TextVNode
 export interface ICustomAPI<Node> {
   updateChildren?: (element: Node, oldChildren: VNode[], children: VNode[], api: ICustomAPI<Node>) => void
-  createElement(node?: VNode): Node
-  setAttributes(node: Node, attrs: { [k: string]: any }): void
+  createElement(node?: ElementVNode | TextVNode): Node
+  setAttribute(node: Node, key: string, value: any, attrs: { [k: string]: any }): void
   /**
    *
    * @param parentNode
@@ -292,8 +315,9 @@ function diffProps(prevProps: Attributes | null, nextProps: Attributes | null): 
 }
 
 export function insertChild<Node>(parent: Node, i: number, vnode: VNode, api: ICustomAPI<Node>) {
-  let newChildEl = api.createElement(vnode)
+  let newChildEl = createElement(vnode, api)
   api.insertAt(parent, newChildEl, i)
+  mountComponent(newChildEl)
   return newChildEl
 }
 
@@ -309,20 +333,14 @@ export function patch<Node>(
     return element
   }
   const replaceNode = () => {
-    const newElement = api.createElement(node)
+    const newElement = createElement(node, api)
     if (!Is.def(element)) {
       api.insertAt(parent, newElement, index)
     } else {
       api.replaceChild(parent, newElement, element)
-      let comp = getComponent(element)
-      if (comp) {
-        try {
-          comp.onUnmount()
-        } catch (error) {
-          console.error(error)
-        }
-      }
+      unMountComponents(element, api)
     }
+    mountComponent(newElement)
     return newElement
   }
   if (!Is.def(oldNode) || !Is.def(element)) {
@@ -364,9 +382,7 @@ export function patch<Node>(
     }
   } else {
     const attrs = diffProps(oldNode.attributes, attributes)
-    if (attrs !== null) {
-      api.setAttributes(element, attrs)
-    }
+    setAttributes(element, attrs, api)
     let update =
       Is.def(api.updateChildren)
       ? api.updateChildren
