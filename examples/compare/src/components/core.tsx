@@ -1,5 +1,7 @@
 import * as pixi from 'pixi.js'
-import { Is, Component, BuiltinWrapper, h } from '../vdom'
+import { Is, Component, h } from '../vdom'
+import { PIXIComponent } from '../vdom/pixi-api'
+// import { PIXIComponent } from '../vdom/pixi-vdom'
 
 export type UserEventHandler = (event: pixi.interaction.InteractionEvent) => void
 export type PixiEventHander = (displayObject: pixi.DisplayObject) => void
@@ -156,9 +158,25 @@ function updateObjectProp<Node>(node: Node, key: string, val: object, props: obj
     }
   }
 }
+export interface StageProps extends pixi.ApplicationOptions, Events {
+  app?: pixi.Application
+}
 
-export class Container extends BuiltinWrapper<ContainerProps> {
-  get rawClass() { return pixi.Container }
+export class Stage extends PIXIComponent<StageProps, pixi.Container> {
+  app: pixi.Application
+  constructor(props: StageProps) {
+    super(props)
+    this.app = props.app || new pixi.Application(props)
+  }
+  create(props: StageProps) {
+    return this.app.stage
+  }
+  update(node: pixi.Container, key: string, val: any, props: StageProps): void {
+    updateContainer(node, key, val, props)
+  }
+}
+
+export class Container extends PIXIComponent<ContainerProps, pixi.Container> {
   create(props: any) {
     return new pixi.Container()
   }
@@ -175,8 +193,7 @@ export interface SpriteProps extends ContainerProps {
   vertexData?: Float32Array
 }
 
-export class Sprite extends BuiltinWrapper<SpriteProps> {
-  get rawClass() { return pixi.Sprite }
+export class Sprite extends PIXIComponent<SpriteProps, pixi.Sprite> {
   create(props: any) {
     return new pixi.Sprite()
   }
@@ -189,8 +206,7 @@ export interface GraphicsProps extends ContainerProps {
   draw: (g: pixi.Graphics) => void
 }
 
-export class Graphics extends BuiltinWrapper<GraphicsProps> {
-  get rawClass() { return pixi.Graphics }
+export class Graphics extends PIXIComponent<GraphicsProps, pixi.Graphics> {
   create(props: any) {
     return new pixi.Graphics()
   }
@@ -209,15 +225,14 @@ export interface TextProps extends ContainerProps {
   dirty?: boolean
 }
 
-export class Text extends BuiltinWrapper<TextProps> {
-  get rawClass() { return pixi.Text }
-  private _skips = ['style']
-  private _skipsSet = new Set(this._skips)
+export class Text extends PIXIComponent<TextProps, pixi.Text> {
+  private static _skips = ['style']
+  private static _skipsSet = new Set(Text._skips)
   create(props: any) {
     return new pixi.Text()
   }
   update(node: pixi.Text, key: string, val: any, props: TextProps): void {
-    if (this._skipsSet.has(key)) {
+    if (Text._skipsSet.has(key)) {
       updateObjectProp(node, key, val, props)
     } else {
       updateContainer(node, key, val, props)

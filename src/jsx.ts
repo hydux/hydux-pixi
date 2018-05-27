@@ -2,9 +2,11 @@ import * as Vdom from './vdom'
 
 declare global {
   namespace JSX {
-    type Element = Vdom.VNode
+    type Element = any
 
-    interface ElementClass extends Vdom.Component<any> {}
+    interface ElementClass {
+
+    }
 
     interface ElementAttributesProperty {
       props: any

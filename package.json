@@ -61,6 +61,7 @@
   },
   "dependencies": {
     "hydux": "^0.4.3",
+    "hydux-mutator": "^0.1.11",
     "pixi-particles": "^3.0.0",
     "pixi.js": "^4.7.3",
     "tslib": "^1.9.0"
