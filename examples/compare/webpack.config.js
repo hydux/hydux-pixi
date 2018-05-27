@@ -23,7 +23,7 @@ module.exports = createConfig([
   setOutput({
     filename: '[name].js',
     path: DIST,
-    publicPath: '/static/dist/',
+    publicPath: '/hydux-pixi/compare/dist/',
   }),
   match(['*.gif', '*.jpg', '*.jpeg', '*.png', '*.webp', '*.eot', '*.svg', '*.ttf', '*.woff', '*.woff2', '*.json'], [
     file()

@@ -43,7 +43,7 @@ export default function withVdom<State, Actions, E = Node>(container: E, options
           // view[0](view[1], view[2], container as any)
 
           // pixi-vdom
-          Vdom.patch(container as any, view[0](view[1], view[2]))
+          Vdom.render(container as any, view[0](view[1], view[2]))
           options.stats.end()
         } else {
           throw new Error('xx')

@@ -158,7 +158,7 @@ function updateObjectProp<Node>(node: Node, key: string, val: object, props: obj
 }
 
 export class Container extends BuiltinWrapper<ContainerProps> {
-  get rawClass() { return pixi.Container }
+  getRawClass() { return pixi.Container }
   create(props: any) {
     return new pixi.Container()
   }
@@ -176,7 +176,7 @@ export interface SpriteProps extends ContainerProps {
 }
 
 export class Sprite extends BuiltinWrapper<SpriteProps> {
-  get rawClass() { return pixi.Sprite }
+  getRawClass() { return pixi.Sprite }
   create(props: any) {
     return new pixi.Sprite()
   }
@@ -190,7 +190,7 @@ export interface GraphicsProps extends ContainerProps {
 }
 
 export class Graphics extends BuiltinWrapper<GraphicsProps> {
-  get rawClass() { return pixi.Graphics }
+  getRawClass() { return pixi.Graphics }
   create(props: any) {
     return new pixi.Graphics()
   }
@@ -210,7 +210,7 @@ export interface TextProps extends ContainerProps {
 }
 
 export class Text extends BuiltinWrapper<TextProps> {
-  get rawClass() { return pixi.Text }
+  getRawClass() { return pixi.Text }
   private _skips = ['style']
   private _skipsSet = new Set(this._skips)
   create(props: any) {

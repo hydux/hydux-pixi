@@ -21,7 +21,7 @@ export function h(vnode, attrs) {
 }
 export abstract class BuiltinWrapper<P = {}> {
   props: any
-  abstract get rawClass(): any
+  abstract getRawClass(): any
   abstract create(props: P | null): any
   abstract update(node: any, key: string, val: any, props: P): void
   updateAll(node: any, attrs: P) {
@@ -44,8 +44,8 @@ export abstract class Component<P = {}, S = {}> {
   props: P = {} as P
   state: S = {} as S
   container: any
-  abstract get builtin(): typeof BuiltinWrapper
   private _rafId = 0
+  abstract getBuiltin(): typeof BuiltinWrapper
   shouldUpdate(nextState, nextProps) {
     return true
   }
@@ -109,7 +109,7 @@ export const Is = {
 type VNode =
 [typeof BuiltinWrapper | ((attrs: object, children: any[]) => any), null | object, [typeof BuiltinWrapper, null | object, any[]][]]
 
-function createElement(vnode: VNode) {
+function createElement<Node>(vnode: VNode): Node {
   const node = vnode[0].prototype.create(vnode[1])
   const attrs = vnode[1] as { oncreate?: Function } | null
   if (attrs && attrs.oncreate) {
@@ -117,44 +117,42 @@ function createElement(vnode: VNode) {
   }
   return node
 }
-export function patch<Node extends PIXI.Container>(node: Node, vnode: VNode) {
+export function patch<Node extends PIXI.Container>(parent: Node, i: number, vnode: VNode) {
   let [Comp, attrs, children] = vnode
-  if (Is.def((Comp as typeof BuiltinWrapper).prototype.rawClass)) {
+  let node = parent.children[i] as Node | undefined
+  let proto = Comp.prototype
+  if (Is.def((proto as BuiltinWrapper).getRawClass())) {
     // ignore
-  } else if (Is.def((Comp as any as typeof Component).prototype.builtin)) { // stateful component
-    Comp = (Comp as any as typeof Component).prototype.builtin as any
+  } else if (Is.def((proto as Component).getBuiltin)) { // stateful component
+    Comp = (proto as Component).getBuiltin()
+    attrs = attrs || {}
+    attrs['children'] = children
   } else {
-    return patch(node, (Comp as any)(attrs, children))
+    return patch(parent, i, (Comp as any)(attrs, children))
+  }
+  if (typeof node === 'undefined') {
+    node = createElement<Node>(vnode)
+    parent.addChild(node!)
+  } else if (node.constructor !== (Comp.prototype as BuiltinWrapper).getRawClass()) {
+    node = createElement(vnode)
+    parent.removeChildAt(i)
+    parent.addChildAt(node!, i)
   }
   if (attrs !== null) {
     let onupdate = attrs['onupdate']
     if (onupdate && onupdate(node, attrs)) {
       return
     }
-    (Comp as typeof BuiltinWrapper).prototype.updateAll(node, attrs)
+    (proto as BuiltinWrapper).updateAll(node, attrs)
   }
-  patchChildren(node, children)
+  patchChildren(node!, children)
 }
 
 function patchChildren<Node extends PIXI.Container>(node: Node, children: VNode[]) {
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
-    if (!Is.def(child)) {
-      continue
-    }
-    if (Is.def((child[0] as any as typeof Component).prototype.builtin)) { // stateful component
-      child[0] = (child[0] as any as typeof Component).prototype.builtin as any
-    }
     let childNode = node.children[i] as any
-    if (typeof childNode === 'undefined') {
-      childNode = createElement(child)
-      node.addChild(childNode)
-    } else if (childNode.constructor !== child[0].prototype.rawClass) { // TODO
-      childNode = createElement(child)
-      node.removeChildAt(i)
-      node.addChildAt(childNode, i)
-    }
-    patch(childNode, child)
+    patch(node, childNode, child)
   }
   for (
     let i = node.children.length - 1;
@@ -163,4 +161,13 @@ function patchChildren<Node extends PIXI.Container>(node: Node, children: VNode[
   ) {
     node.removeChildAt(i)
   }
+}
+
+import pixi from 'pixi.js'
+
+export function render<Node extends PIXI.Container>(parent: Node, vnode: VNode) {
+  if (parent.children.length === 0) {
+    parent.addChild(new pixi.Container())
+  }
+  return patch(parent, 0, vnode)
 }

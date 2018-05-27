@@ -5,7 +5,7 @@ import * as pixi from 'pixi.js'
 const CompKey = '@gl-vdom/comp'
 function makeComponentRoot<T extends typeof PIXIComponent>(CompClass: T) {
   return class PIXIComponentRoot extends BuiltinWrapper {
-    get rawClass() { return PIXI.Container }
+    getRawClass() { return PIXI.Container }
     update<P>(node: pixi.Container, key: string, val: any, props: P) {
       node[CompKey].props[key] = val
     }
@@ -32,7 +32,7 @@ function makeComponentRoot<T extends typeof PIXIComponent>(CompClass: T) {
 export class PIXIComponent<P = {}, S = {}> extends Component {
   container: PIXI.Container
   _builtin: any
-  get builtin() {
+  getBuiltin() {
     if (!this._builtin) {
       this._builtin = makeComponentRoot(this.constructor as typeof PIXIComponent)
     }

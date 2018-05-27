@@ -60,7 +60,7 @@ switch (type) {
   default:
     break
 }
-getPixiApp().view.addEventListener('click', () => {
+document.getElementById('add')!.addEventListener('click', () => {
   app.addBunnies(300)
 })
 async function main() {
