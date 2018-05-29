@@ -1,4 +1,22 @@
-export function h(vnode, attrs, ...children)
+
+export interface ICustomAPI<Node> {
+  getChildAt(parent: Node, i: number): Node | undefined
+  getChildrenCount(parent: Node): number
+  addChild(parent: Node, child: Node)
+  replaceChildAt(parent: Node, i: number, child: Node)
+  removeChildAt(parent: Node, i: number)
+}
+
+export interface BaseAttributes<Node> {
+  oncreate?: (el: Node) => void
+  onupdate?: (el: Node, attrs: Attributes<Node>) => boolean | void
+}
+
+export type Attributes<Node> = BaseAttributes<Node> & {
+  [k: string]: any
+}
+
+export function h(vnode: typeof Component | typeof BuiltinWrapper, attrs: null | Attributes<Node>, ...children: (VNode | VNode[] | undefined | null)[])
 export function h(vnode, attrs) {
   let children: VNode[] = []
   let rest: (VNode | VNode[])[] = []
@@ -29,8 +47,7 @@ export abstract class BuiltinWrapper<P = {}> {
       if (
         typeof attrs[key] === 'undefined' ||
         key[0] === 'onupdate' ||
-        key[0] === 'oncreate' ||
-        key[0] === 'onremove'
+        key[0] === 'oncreate'
       ) {
         continue
       }
@@ -44,6 +61,7 @@ export abstract class Component<P = {}, S = {}> {
   props: P = {} as P
   state: S = {} as S
   container: any
+  abstract _api: ICustomAPI<any>
   private _rafId = 0
   abstract getBuiltin(): typeof BuiltinWrapper
   shouldUpdate(nextState, nextProps) {
@@ -77,6 +95,7 @@ export abstract class Component<P = {}, S = {}> {
       patchChildren(
         this.container,
         [view],
+        this._api,
       )
     }
   }
@@ -106,7 +125,7 @@ export const Is = {
   },
 }
 
-type VNode =
+export type VNode =
 [typeof BuiltinWrapper | ((attrs: object, children: any[]) => any), null | object, [typeof BuiltinWrapper, null | object, any[]][]]
 
 function createElement<Node>(vnode: VNode): Node {
@@ -117,26 +136,26 @@ function createElement<Node>(vnode: VNode): Node {
   }
   return node
 }
-export function patch<Node extends PIXI.Container>(parent: Node, i: number, vnode: VNode) {
+export function patch<Node>(parent: Node, i: number, vnode: VNode, api: ICustomAPI<Node>) {
   let [Comp, attrs, children] = vnode
-  let node = parent.children[i] as Node | undefined
+  let node = api.getChildAt(parent, i) as Node | undefined
   let proto = Comp.prototype
-  if (Is.def((proto as BuiltinWrapper).getRawClass())) {
+  if (Is.def((proto as BuiltinWrapper).getRawClass)) {
     // ignore
   } else if (Is.def((proto as Component).getBuiltin)) { // stateful component
-    Comp = (proto as Component).getBuiltin()
-    attrs = attrs || {}
+    Comp = vnode[0] = (proto as Component).getBuiltin()
+    vnode[1] = attrs = attrs || {}
+    proto = Comp.prototype
     attrs['children'] = children
   } else {
-    return patch(parent, i, (Comp as any)(attrs, children))
+    return patch(parent, i, (Comp as any)(attrs, children), api)
   }
   if (typeof node === 'undefined') {
     node = createElement<Node>(vnode)
-    parent.addChild(node!)
-  } else if (node.constructor !== (Comp.prototype as BuiltinWrapper).getRawClass()) {
+    api.addChild(parent, node)
+  } else if (node.constructor !== (proto as BuiltinWrapper).getRawClass()) {
     node = createElement(vnode)
-    parent.removeChildAt(i)
-    parent.addChildAt(node!, i)
+    api.replaceChildAt(parent, i, node!)
   }
   if (attrs !== null) {
     let onupdate = attrs['onupdate']
@@ -145,29 +164,19 @@ export function patch<Node extends PIXI.Container>(parent: Node, i: number, vnod
     }
     (proto as BuiltinWrapper).updateAll(node, attrs)
   }
-  patchChildren(node!, children)
+  patchChildren(node!, children, api)
 }
 
-function patchChildren<Node extends PIXI.Container>(node: Node, children: VNode[]) {
+function patchChildren<Node>(node: Node, children: VNode[], api: ICustomAPI<Node>) {
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
-    let childNode = node.children[i] as any
-    patch(node, childNode, child)
+    patch<Node>(node, i, child, api)
   }
   for (
-    let i = node.children.length - 1;
+    let i = api.getChildrenCount(node) - 1;
     i >= children.length;
     i--
   ) {
-    node.removeChildAt(i)
+    api.removeChildAt(node, i)
   }
-}
-
-import pixi from 'pixi.js'
-
-export function render<Node extends PIXI.Container>(parent: Node, vnode: VNode) {
-  if (parent.children.length === 0) {
-    parent.addChild(new pixi.Container())
-  }
-  return patch(parent, 0, vnode)
 }

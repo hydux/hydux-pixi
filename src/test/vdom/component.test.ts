@@ -7,7 +7,7 @@
 
 // describe('component', () => {
 //   describe('SimpleComp', () => {
-//     beforeEach(() => {
+//     beforeEacdh(() => {
 //       document.body.innerHTML = ''
 //     })
 //     let mountCount = 0

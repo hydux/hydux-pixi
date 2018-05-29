@@ -1,5 +1,5 @@
-import { h, patch } from '../../../../src/vdom'
-import { PIXIComponent } from '../../../../src/vdom/pixi'
+import { h } from '../../../../src/vdom'
+import { PIXIComponent, render } from '../../../../src/vdom/pixi'
 import '../../../../src/jsx'
 import * as pixi from 'pixi.js'
 import { Container, Sprite, Graphics, Text } from '../../../../src/components/core'
@@ -64,6 +64,6 @@ export default {
     addBunnies(count)
   },
   async start() {
-    patch(getPixiApp().stage as any, <Container><App /></Container>)
+    render(getPixiApp().stage as any, <App />)
   },
 }

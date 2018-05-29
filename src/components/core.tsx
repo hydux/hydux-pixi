@@ -1,5 +1,5 @@
 import * as pixi from 'pixi.js'
-import { Is, Component, BuiltinWrapper, h } from '../vdom'
+import { Is, Component, BuiltinWrapper, h, Attributes } from '../vdom'
 
 export type UserEventHandler = (event: pixi.interaction.InteractionEvent) => void
 export type PixiEventHander = (displayObject: pixi.DisplayObject) => void
@@ -53,7 +53,7 @@ export interface Events {
 // type B = 'BBB'
 // type C = A + B
 
-export interface ContainerProps extends Events {
+export interface ContainerProps extends Events, Attributes<PIXI.Container> {
   ref?: (c: any) => any
   scaleX?: number
   scaleY?: number
@@ -142,8 +142,8 @@ export function updateContainer(node: pixi.Container, key: string, val: any, pro
     } else {
       addEvent(node, 'on', key[2].toLowerCase() + key.slice(3), val)
     }
-  // } else if (node[key] !== val) {
-  } else {
+  } else if (node[key] !== val) {
+  // } else {
     node[key] = val
   }
 }
@@ -210,14 +210,14 @@ export interface TextProps extends ContainerProps {
 }
 
 export class Text extends BuiltinWrapper<TextProps> {
+  private static _skips = ['style']
+  private static _skipsSet = new Set(Text._skips)
   getRawClass() { return pixi.Text }
-  private _skips = ['style']
-  private _skipsSet = new Set(this._skips)
   create(props: any) {
     return new pixi.Text()
   }
   update(node: pixi.Text, key: string, val: any, props: TextProps): void {
-    if (this._skipsSet.has(key)) {
+    if (Text._skipsSet.has(key)) {
       updateObjectProp(node, key, val, props)
     } else {
       updateContainer(node, key, val, props)

@@ -1,4 +1,5 @@
 import * as Vdom from './vdom'
+import { render as renderPixi } from './vdom/pixi'
 import * as Hydux from 'hydux'
 const React = { createElement: Vdom.h }
 
@@ -43,7 +44,7 @@ export default function withVdom<State, Actions, E = Node>(container: E, options
           // view[0](view[1], view[2], container as any)
 
           // pixi-vdom
-          Vdom.render(container as any, view[0](view[1], view[2]))
+          renderPixi(container as any, view[0](view[1], view[2]))
           options.stats.end()
         } else {
           throw new Error('xx')

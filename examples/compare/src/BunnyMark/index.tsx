@@ -1,4 +1,5 @@
-import { h, patch } from '../../../../src/vdom'
+import { h } from '../../../../src/vdom'
+import { render as renderPixi } from '../../../../src/vdom/pixi'
 import '../../../../src/jsx'
 import * as pixi from 'pixi.js'
 import { Container, Sprite, Graphics, Text } from '../../../../src/components/core'
@@ -129,7 +130,7 @@ export default {
         // fix duplicate node in hmr
         const render = () => {
           stats.begin()
-          patch(getPixiApp().stage as any, view[0](view[1], view[2]))
+          renderPixi(getPixiApp().stage as any, view[0](view[1], view[2]))
           stats.end()
         }
         rafId = window.requestAnimationFrame(render)
