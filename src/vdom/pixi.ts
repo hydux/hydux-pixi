@@ -1,10 +1,10 @@
 
-import { BuiltinWrapper, Is, patch, Component, VNode, ICustomAPI } from '.'
+import { RawObjectWrapper, Is, patch, Component, VNode, ICustomAPI } from '.'
 import * as pixi from 'pixi.js'
 
 const CompKey = '@gl-vdom/comp'
 function makeComponentRoot<T extends typeof PIXIComponent>(CompClass: T) {
-  return class PIXIComponentRoot extends BuiltinWrapper {
+  return class PIXIComponentRoot extends RawObjectWrapper {
     getRawClass() { return PIXI.Container }
     update<P>(node: pixi.Container, key: string, val: any, props: P) {
       node[CompKey].props[key] = val

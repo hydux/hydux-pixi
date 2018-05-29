@@ -8,7 +8,7 @@
   "scripts": {
     "build": "del lib && tsc",
     "build:dist": "webpack -p --progress --profile",
-    "test": "mocha --require ts-node/register \"src/test/**/*.test.ts\"",
+    "test": "mocha --require ts-node/register \"src/test/**/*.test.ts\" --exit",
     "nyc": "nyc --extension .tsx --extension .ts --require ts-node/register -r html npm run test",
     "test:watch": "npm run test -- -w --watch-extensions ts,tsx",
     "doc": "typedoc --theme minimal --out ./docs --exclude ./test ./src && touch ./docs/.nojekyll",

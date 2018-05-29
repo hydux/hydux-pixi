@@ -1,5 +1,5 @@
 import * as pixi from 'pixi.js'
-import { Is, Component, BuiltinWrapper, h, Attributes } from '../vdom'
+import { Is, Component, RawObjectWrapper, h, Attributes } from '../vdom'
 
 export type UserEventHandler = (event: pixi.interaction.InteractionEvent) => void
 export type PixiEventHander = (displayObject: pixi.DisplayObject) => void
@@ -157,7 +157,7 @@ function updateObjectProp<Node>(node: Node, key: string, val: object, props: obj
   }
 }
 
-export class Container extends BuiltinWrapper<ContainerProps> {
+export class Container extends RawObjectWrapper<ContainerProps> {
   getRawClass() { return pixi.Container }
   create(props: any) {
     return new pixi.Container()
@@ -175,7 +175,7 @@ export interface SpriteProps extends ContainerProps {
   vertexData?: Float32Array
 }
 
-export class Sprite extends BuiltinWrapper<SpriteProps> {
+export class Sprite extends RawObjectWrapper<SpriteProps> {
   getRawClass() { return pixi.Sprite }
   create(props: any) {
     return new pixi.Sprite()
@@ -189,7 +189,7 @@ export interface GraphicsProps extends ContainerProps {
   draw: (g: pixi.Graphics) => void
 }
 
-export class Graphics extends BuiltinWrapper<GraphicsProps> {
+export class Graphics extends RawObjectWrapper<GraphicsProps> {
   getRawClass() { return pixi.Graphics }
   create(props: any) {
     return new pixi.Graphics()
@@ -209,7 +209,7 @@ export interface TextProps extends ContainerProps {
   dirty?: boolean
 }
 
-export class Text extends BuiltinWrapper<TextProps> {
+export class Text extends RawObjectWrapper<TextProps> {
   private static _skips = ['style']
   private static _skipsSet = new Set(Text._skips)
   getRawClass() { return pixi.Text }

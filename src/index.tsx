@@ -33,22 +33,11 @@ export default function withVdom<State, Actions, E = Node>(container: E, options
       const render = () => {
         if (typeof options.stats !== 'undefined') {
           options.stats.begin()
-          // vdom
-          // if (!window['logged']) {
-          //   console.log('vdom', view[0](view[1], view[2]))
-          //   window['logged'] = true
-          // }
-          // Vdom.render(view[0](view[1], view[2]), container, _options.api)
-
-          // mutate
-          // view[0](view[1], view[2], container as any)
-
-          // pixi-vdom
+          // vdomd
           renderPixi(container as any, view[0](view[1], view[2]))
           options.stats.end()
         } else {
-          throw new Error('xx')
-          // Vdom.render(view[0](view[1], view[2]), container, _options.api)
+          renderPixi(container as any, view[0](view[1], view[2]))
         }
       }
       rafId = window.requestAnimationFrame(render)

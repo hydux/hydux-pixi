@@ -13,10 +13,9 @@ export interface BaseAttributes<Node> {
 }
 
 export type Attributes<Node> = BaseAttributes<Node> & {
-  [k: string]: any
 }
 
-export function h(vnode: typeof Component | typeof BuiltinWrapper, attrs: null | Attributes<Node>, ...children: (VNode | VNode[] | undefined | null)[])
+export function h<P>(vnode: typeof Component | typeof RawObjectWrapper, attrs: null | Attributes<Node>, ...children: (VNode | VNode[] | undefined | null)[])
 export function h(vnode, attrs) {
   let children: VNode[] = []
   let rest: (VNode | VNode[])[] = []
@@ -37,7 +36,13 @@ export function h(vnode, attrs) {
 
   return [vnode, attrs, children]
 }
-export abstract class BuiltinWrapper<P = {}> {
+
+/**
+ * RawObjectWrapper is used for wrap raw pixi objects,
+ * we only use it as class.prototype in diff function,
+ * the constructor/class field won't work.
+ */
+export abstract class RawObjectWrapper<P = {}> {
   props: any
   abstract getRawClass(): any
   abstract create(props: P | null): any
@@ -63,7 +68,7 @@ export abstract class Component<P = {}, S = {}> {
   container: any
   abstract _api: ICustomAPI<any>
   private _rafId = 0
-  abstract getBuiltin(): typeof BuiltinWrapper
+  abstract getBuiltin(): typeof RawObjectWrapper
   shouldUpdate(nextState, nextProps) {
     return true
   }
@@ -126,7 +131,7 @@ export const Is = {
 }
 
 export type VNode =
-[typeof BuiltinWrapper | ((attrs: object, children: any[]) => any), null | object, [typeof BuiltinWrapper, null | object, any[]][]]
+[typeof RawObjectWrapper | ((attrs: object, children: any[]) => any), null | object, [typeof RawObjectWrapper, null | object, any[]][]]
 
 function createElement<Node>(vnode: VNode): Node {
   const node = vnode[0].prototype.create(vnode[1])
@@ -140,7 +145,7 @@ export function patch<Node>(parent: Node, i: number, vnode: VNode, api: ICustomA
   let [Comp, attrs, children] = vnode
   let node = api.getChildAt(parent, i) as Node | undefined
   let proto = Comp.prototype
-  if (Is.def((proto as BuiltinWrapper).getRawClass)) {
+  if (Is.def((proto as RawObjectWrapper).getRawClass)) {
     // ignore
   } else if (Is.def((proto as Component).getBuiltin)) { // stateful component
     Comp = vnode[0] = (proto as Component).getBuiltin()
@@ -153,7 +158,7 @@ export function patch<Node>(parent: Node, i: number, vnode: VNode, api: ICustomA
   if (typeof node === 'undefined') {
     node = createElement<Node>(vnode)
     api.addChild(parent, node)
-  } else if (node.constructor !== (proto as BuiltinWrapper).getRawClass()) {
+  } else if (node.constructor !== (proto as RawObjectWrapper).getRawClass()) {
     node = createElement(vnode)
     api.replaceChildAt(parent, i, node!)
   }
@@ -162,7 +167,7 @@ export function patch<Node>(parent: Node, i: number, vnode: VNode, api: ICustomA
     if (onupdate && onupdate(node, attrs)) {
       return
     }
-    (proto as BuiltinWrapper).updateAll(node, attrs)
+    (proto as RawObjectWrapper).updateAll(node, attrs)
   }
   patchChildren(node!, children, api)
 }

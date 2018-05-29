@@ -26,31 +26,31 @@ describe('desc', () => {
       ]), expected)
   })
   testTrees('replace element', [
-    { node: h(Container, {}), pixidom: ['Container', {}, []] },
-    { node: h(Sprite, {}), pixidom: ['Sprite', {}, []] },
+    { node: h(Container, {}), pixidom: ['Container', {}] },
+    { node: h(Sprite, {}), pixidom: ['Sprite', {}] },
   ])
   testTrees('insert children on top', [
     {
       node: h(Container, {}, [h(Sprite, { x: 1 }, h(Text, { text: 'A' }))]),
-      pixidom: ['Container', {}, [
+      pixidom: ['Container', {},
         ['Sprite', { x: 1 },
-          ['Text', { text: 'A' }, []]
+          ['Text', { text: 'A' }]
         ]
-      ]],
+      ],
     },
     {
       node: h(Container, {},
         h(Sprite, { x: 2 }, h(Text, { text: 'B' })),
         h(Sprite, { x: 1 }, h(Text, { text: 'A' })),
       ),
-      pixidom: ['Container', {}, [
+      pixidom: ['Container', {},
         ['Sprite', { x: 2 },
-          ['Text', { text: 'B' }, []]
+          ['Text', { text: 'B' }]
         ],
         ['Sprite', { x: 1 },
-          ['Text', { text: 'A' }, []]
+          ['Text', { text: 'A' }]
         ]
-      ]],
+      ],
     },
     {
       node: h(Container, {},
@@ -58,17 +58,17 @@ describe('desc', () => {
         h(Sprite, { x: 2 }, h(Text, { text: 'B' })),
         h(Sprite, { x: 1 }, h(Text, { text: 'A' })),
       ),
-      pixidom: ['Container', {}, [
+      pixidom: ['Container', {},
         ['Sprite', { x: 3 },
-          ['Text', { text: 'C' }, []]
+          ['Text', { text: 'C' }]
         ],
         ['Sprite', { x: 2 },
-          ['Text', { text: 'B' }, []]
+          ['Text', { text: 'B' }]
         ],
         ['Sprite', { x: 1 },
-          ['Text', { text: 'A' }, []]
+          ['Text', { text: 'A' }]
         ]
-      ]],
+      ],
     },
   ])
   testTrees('remove text node', [
@@ -77,22 +77,22 @@ describe('desc', () => {
         h(Sprite, {}, [h(Text, { text: 'foo' })]),
         h(Text, { text: 'bar' }),
       ]),
-      pixidom: ['Container', {}, [
+      pixidom: ['Container', {},
         ['Sprite', { },
-          ['Text', { text: 'foo' }, []]
+          ['Text', { text: 'foo' }]
         ],
-        ['Text', { text: 'bar' }, []],
-      ]],
+        ['Text', { text: 'bar' }],
+      ],
     },
     {
       node: h(Container, {}, [
         h(Sprite, {}, [h(Text, { text: 'foo' })]),
       ]),
-      pixidom: ['Container', {}, [
+      pixidom: ['Container', {},
         ['Sprite', { },
-          ['Text', { text: 'foo' }, []]
+          ['Text', { text: 'foo' }]
         ],
-      ]],
+      ],
     },
   ])
   testTrees('sort', [
@@ -104,13 +104,13 @@ describe('desc', () => {
         h(Sprite, { x: 4 }, h(Text, { text: 'D' })),
         h(Sprite, { x: 5 }, h(Text, { text: 'E' })),
       ),
-      pixidom: ['Container', {}, [
-        ['Sprite', { x: 1 }, ['Text', { text: 'A' }, []]],
-        ['Sprite', { x: 2 }, ['Text', { text: 'B' }, []]],
-        ['Sprite', { x: 3 }, ['Text', { text: 'C' }, []]],
-        ['Sprite', { x: 4 }, ['Text', { text: 'D' }, []]],
-        ['Sprite', { x: 5 }, ['Text', { text: 'E' }, []]],
-      ]],
+      pixidom: ['Container', {},
+        ['Sprite', { x: 1 }, ['Text', { text: 'A' }]],
+        ['Sprite', { x: 2 }, ['Text', { text: 'B' }]],
+        ['Sprite', { x: 3 }, ['Text', { text: 'C' }]],
+        ['Sprite', { x: 4 }, ['Text', { text: 'D' }]],
+        ['Sprite', { x: 5 }, ['Text', { text: 'E' }]],
+      ],
     },
     {
       node: h(Container, {},
@@ -118,19 +118,19 @@ describe('desc', () => {
         h(Sprite, { x: 3 }, h(Text, { text: 'C' })),
         h(Sprite, { x: 4 }, h(Text, { text: 'D' })),
       ),
-      pixidom: ['Container', {}, [
-        ['Sprite', { x: 1 }, ['Text', { text: 'A' }, []]],
-        ['Sprite', { x: 3 }, ['Text', { text: 'C' }, []]],
-        ['Sprite', { x: 4 }, ['Text', { text: 'D' }, []]],
-      ]],
+      pixidom: ['Container', {},
+        ['Sprite', { x: 1 }, ['Text', { text: 'A' }]],
+        ['Sprite', { x: 3 }, ['Text', { text: 'C' }]],
+        ['Sprite', { x: 4 }, ['Text', { text: 'D' }]],
+      ],
     },
     {
       node: h(Container, {},
         h(Sprite, { x: 4 }, h(Text, { text: 'D' })),
       ),
-      pixidom: ['Container', {}, [
-        ['Sprite', { x: 4 }, ['Text', { text: 'D' }, []]],
-      ]],
+      pixidom: ['Container', {},
+        ['Sprite', { x: 4 }, ['Text', { text: 'D' }]],
+      ],
     },
     {
       node: h(Container, {},
@@ -140,13 +140,13 @@ describe('desc', () => {
         h(Sprite, { x: 4 }, h(Text, { text: 'D' })),
         h(Sprite, { x: 5 }, h(Text, { text: 'E' })),
       ),
-      pixidom: ['Container', {}, [
-        ['Sprite', { x: 1 }, ['Text', { text: 'A' }, []]],
-        ['Sprite', { x: 2 }, ['Text', { text: 'B' }, []]],
-        ['Sprite', { x: 3 }, ['Text', { text: 'C' }, []]],
-        ['Sprite', { x: 4 }, ['Text', { text: 'D' }, []]],
-        ['Sprite', { x: 5 }, ['Text', { text: 'E' }, []]],
-      ]],
+      pixidom: ['Container', {},
+        ['Sprite', { x: 1 }, ['Text', { text: 'A' }]],
+        ['Sprite', { x: 2 }, ['Text', { text: 'B' }]],
+        ['Sprite', { x: 3 }, ['Text', { text: 'C' }]],
+        ['Sprite', { x: 4 }, ['Text', { text: 'D' }]],
+        ['Sprite', { x: 5 }, ['Text', { text: 'E' }]],
+      ]
     },
     {
       node: h(Container, {},
@@ -156,13 +156,13 @@ describe('desc', () => {
         h(Sprite, { x: 4 }, h(Text, { text: 'D' })),
         h(Sprite, { x: 5 }, h(Text, { text: 'E' })),
       ),
-      pixidom: ['Container', {}, [
-        ['Sprite', { x: 1 }, ['Text', { text: 'A' }, []]],
-        ['Sprite', { x: 3 }, ['Text', { text: 'C' }, []]],
-        ['Sprite', { x: 2 }, ['Text', { text: 'B' }, []]],
-        ['Sprite', { x: 4 }, ['Text', { text: 'D' }, []]],
-        ['Sprite', { x: 5 }, ['Text', { text: 'E' }, []]],
-      ]],
+      pixidom: ['Container', {},
+        ['Sprite', { x: 1 }, ['Text', { text: 'A' }]],
+        ['Sprite', { x: 3 }, ['Text', { text: 'C' }]],
+        ['Sprite', { x: 2 }, ['Text', { text: 'B' }]],
+        ['Sprite', { x: 4 }, ['Text', { text: 'D' }]],
+        ['Sprite', { x: 5 }, ['Text', { text: 'E' }]],
+      ],
     },
     {
       node: h(Container, {},
@@ -172,13 +172,13 @@ describe('desc', () => {
         h(Sprite, { x: 4 }, h(Text, { text: 'D' })),
         h(Sprite, { x: 5 }, h(Text, { text: 'E' })),
       ),
-      pixidom: ['Container', {}, [
-        ['Sprite', { x: 1 }, ['Text', { text: 'A' }, []]],
-        ['Sprite', { x: 3 }, ['Text', { text: 'C' }, []]],
-        ['Sprite', { x: 2 }, ['Text', { text: 'B' }, []]],
-        ['Sprite', { x: 4 }, ['Text', { text: 'D' }, []]],
-        ['Sprite', { x: 5 }, ['Text', { text: 'E' }, []]],
-      ]],
+      pixidom: ['Container', {},
+        ['Sprite', { x: 1 }, ['Text', { text: 'A' }]],
+        ['Sprite', { x: 3 }, ['Text', { text: 'C' }]],
+        ['Sprite', { x: 2 }, ['Text', { text: 'B' }]],
+        ['Sprite', { x: 4 }, ['Text', { text: 'D' }]],
+        ['Sprite', { x: 5 }, ['Text', { text: 'E' }]],
+      ],
     },
     {
       node: h(Container, {},
@@ -187,12 +187,12 @@ describe('desc', () => {
         h(Sprite, { x: 2 }, h(Text, { text: 'B' })),
         h(Sprite, { x: 1 }, h(Text, { text: 'A' })),
       ),
-      pixidom: ['Container', {}, [
-        ['Sprite', { x: 4 }, ['Text', { text: 'D' }, []]],
-        ['Sprite', { x: 3 }, ['Text', { text: 'C' }, []]],
-        ['Sprite', { x: 2 }, ['Text', { text: 'B' }, []]],
-        ['Sprite', { x: 1 }, ['Text', { text: 'A' }, []]],
-      ]],
+      pixidom: ['Container', {},
+        ['Sprite', { x: 4 }, ['Text', { text: 'D' }]],
+        ['Sprite', { x: 3 }, ['Text', { text: 'C' }]],
+        ['Sprite', { x: 2 }, ['Text', { text: 'B' }]],
+        ['Sprite', { x: 1 }, ['Text', { text: 'A' }]],
+      ],
     },
   ])
 })
