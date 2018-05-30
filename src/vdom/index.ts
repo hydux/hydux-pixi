@@ -10,13 +10,26 @@ export interface ICustomAPI<Node> {
 export interface BaseAttributes<Node> {
   oncreate?: (el: Node) => void
   onupdate?: (el: Node, attrs: Attributes<Node>) => boolean | void
+  children?: VNode[]
 }
 
 export type Attributes<Node> = BaseAttributes<Node> & {
 }
 
-export function h<P>(vnode: typeof Component | typeof RawObjectWrapper, attrs: null | Attributes<Node>, ...children: (VNode | VNode[] | undefined | null)[])
-export function h(vnode, attrs) {
+export interface ComponentConstructor<P = {}> {
+  displayName?: string
+  new (props?: P): Component<P> | NativeWrapper<P>
+}
+export interface FunctionalComponent<P = {}> {
+  (props: P, children: VNode[]): VNode
+  displayName?: string
+  defaultProps?: Partial<P>
+}
+
+type ComponentFactory<P> = ComponentConstructor<P> | FunctionalComponent<P>
+export type Child = VNode | null | undefined
+export function h<P>(name: ComponentFactory<P>, attrs: null | (Attributes<any> & P), ...children: (Child | Child[])[]): VNode
+export function h(name, attrs): VNode {
   let children: VNode[] = []
   let rest: (VNode | VNode[])[] = []
   let len = arguments.length
@@ -34,7 +47,7 @@ export function h(vnode, attrs) {
     }
   }
 
-  return [vnode, attrs, children]
+  return [name, attrs, children]
 }
 
 /**
@@ -42,8 +55,8 @@ export function h(vnode, attrs) {
  * we only use it as class.prototype in diff function,
  * the constructor/class field won't work.
  */
-export abstract class RawObjectWrapper<P = {}> {
-  props: any
+export abstract class NativeWrapper<P = {}> {
+  props: P
   abstract getRawClass(): any
   abstract create(props: P | null): any
   abstract update(node: any, key: string, val: any, props: P): void
@@ -68,7 +81,7 @@ export abstract class Component<P = {}, S = {}> {
   container: any
   abstract _api: ICustomAPI<any>
   private _rafId = 0
-  abstract getBuiltin(): typeof RawObjectWrapper
+  abstract getBuiltin(): typeof NativeWrapper
   shouldUpdate(nextState, nextProps) {
     return true
   }
@@ -130,8 +143,8 @@ export const Is = {
   },
 }
 
-export type VNode =
-[typeof RawObjectWrapper | ((attrs: object, children: any[]) => any), null | object, [typeof RawObjectWrapper, null | object, any[]][]]
+export type VNode<P = any> =
+[ComponentFactory<P>, null | object, [ComponentFactory<P>, null | object, any[]][]]
 
 function createElement<Node>(vnode: VNode): Node {
   const node = vnode[0].prototype.create(vnode[1])
@@ -145,10 +158,10 @@ export function patch<Node>(parent: Node, i: number, vnode: VNode, api: ICustomA
   let [Comp, attrs, children] = vnode
   let node = api.getChildAt(parent, i) as Node | undefined
   let proto = Comp.prototype
-  if (Is.def((proto as RawObjectWrapper).getRawClass)) {
+  if (Is.def((proto as NativeWrapper).getRawClass)) {
     // ignore
   } else if (Is.def((proto as Component).getBuiltin)) { // stateful component
-    Comp = vnode[0] = (proto as Component).getBuiltin()
+    Comp = vnode[0] = (proto as Component).getBuiltin() as any
     vnode[1] = attrs = attrs || {}
     proto = Comp.prototype
     attrs['children'] = children
@@ -158,7 +171,7 @@ export function patch<Node>(parent: Node, i: number, vnode: VNode, api: ICustomA
   if (typeof node === 'undefined') {
     node = createElement<Node>(vnode)
     api.addChild(parent, node)
-  } else if (node.constructor !== (proto as RawObjectWrapper).getRawClass()) {
+  } else if (node.constructor !== (proto as NativeWrapper).getRawClass()) {
     node = createElement(vnode)
     api.replaceChildAt(parent, i, node!)
   }
@@ -167,7 +180,7 @@ export function patch<Node>(parent: Node, i: number, vnode: VNode, api: ICustomA
     if (onupdate && onupdate(node, attrs)) {
       return
     }
-    (proto as RawObjectWrapper).updateAll(node, attrs)
+    (proto as NativeWrapper).updateAll(node, attrs)
   }
   patchChildren(node!, children, api)
 }

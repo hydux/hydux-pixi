@@ -4,6 +4,7 @@ export const Assets = {
   birds: require('./assets/birds.png'),
   funface: require('./assets/funface.png'),
   land: require('./assets/land.png'),
+  sky: require('./assets/sky.png'),
   pipeDown: require('./assets/pipeDown.png'),
   pipeUp: require('./assets/pipeUp.png'),
 }
@@ -14,23 +15,19 @@ export const Textures = (() => {
     pixi.loader.add(key, Assets[key])
     Object.defineProperty(t, key, {
       get() {
-        return pixi.loader.resources[key]
+        return pixi.loader.resources[key].texture
       },
     })
   }
   return t
 })()
 
-export async function load() {
-  return new Promise(
-    res => {
-      pixi.loader
-        .on('complete', () => {
-          console.log('loaded')
-        })
-        .load(res)
-    }
-  )
+export function onload(cb: () => void) {
+  pixi.loader
+    .on('complete', () => {
+      console.log('loaded')
+    })
+    .load(cb)
 }
 
 export default Textures

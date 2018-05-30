@@ -23,7 +23,7 @@ module.exports = createConfig([
   setOutput({
     filename: '[name].js',
     path: DIST,
-    publicPath: '/hydux-pixi/compare/dist/',
+    publicPath: '/hydux-pixi/flappyfunny/dist/',
   }),
   match(['*.gif', '*.jpg', '*.jpeg', '*.png', '*.webp', '*.eot', '*.svg', '*.ttf', '*.woff', '*.woff2', '*.json'], [
     file()
@@ -46,10 +46,10 @@ module.exports = createConfig([
     },
   }),
   addPlugins([
-    new webpack.DllReferencePlugin({
-      context: __dirname,
-      manifest: require(`${DIST}/vendor-manifest.json`),
-    }),
+    // new webpack.DllReferencePlugin({
+    //   context: __dirname,
+    //   manifest: require(`${DIST}/vendor-manifest.json`),
+    // }),
     // new webpack.optimize.CommonsChunkPlugin({
     //     name: 'vendor',
     //     minChunks: function (module) {
@@ -74,13 +74,13 @@ module.exports = createConfig([
         chunks: false,
         children: false,
       },
-    }),
-    devServer.proxy({
-      '/api': {
-        target: 'http://localhost:3000',
-        secure: false,
-        changeOrigin: true,
-      },
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+      }
     }),
     addPlugins([
       // prints more readable module names in the browser console on HMR updates

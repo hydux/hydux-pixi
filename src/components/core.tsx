@@ -1,5 +1,5 @@
 import * as pixi from 'pixi.js'
-import { Is, Component, RawObjectWrapper, h, Attributes } from '../vdom'
+import { Is, Component, NativeWrapper, h, Attributes } from '../vdom'
 
 export type UserEventHandler = (event: pixi.interaction.InteractionEvent) => void
 export type PixiEventHander = (displayObject: pixi.DisplayObject) => void
@@ -129,11 +129,11 @@ function addEvent(node: pixi.DisplayObject, type: 'on' | 'once', name: string, l
   }
 }
 
-export function updateContainer(node: pixi.Container, key: string, val: any, props: ContainerProps) {
+export function baseUpdate(node: pixi.Container, key: string, val: any, props: ContainerProps, _map?: {[k: string]: (node: pixi.Container, val: any) => void}) {
   if (typeof val === 'undefined') {
     return
   }
-  let update = updateMap[key]
+  let update = updateMap[key] || (_map && _map[key])
   if (typeof update !== 'undefined') {
     update(node, props[key])
   } else if (key[0] === 'o' && key[1] === 'n') {
@@ -143,7 +143,6 @@ export function updateContainer(node: pixi.Container, key: string, val: any, pro
       addEvent(node, 'on', key[2].toLowerCase() + key.slice(3), val)
     }
   } else if (node[key] !== val) {
-  // } else {
     node[key] = val
   }
 }
@@ -157,17 +156,20 @@ function updateObjectProp<Node>(node: Node, key: string, val: object, props: obj
   }
 }
 
-export class Container extends RawObjectWrapper<ContainerProps> {
+export class Container extends NativeWrapper<ContainerProps> {
   getRawClass() { return pixi.Container }
   create(props: any) {
     return new pixi.Container()
   }
   update(node: pixi.Container, key: string, val: any, props: ContainerProps): void {
-    updateContainer(node, key, val, props)
+    baseUpdate(node, key, val, props)
   }
 }
 
 export interface SpriteProps extends ContainerProps {
+  anchor?: PIXI.ObservablePoint
+  anchorX?: number,
+  anchorY?: number,
   tint?: number
   blendMode?: number
   pluginName?: string
@@ -175,13 +177,23 @@ export interface SpriteProps extends ContainerProps {
   vertexData?: Float32Array
 }
 
-export class Sprite extends RawObjectWrapper<SpriteProps> {
+export class Sprite extends NativeWrapper<SpriteProps> {
   getRawClass() { return pixi.Sprite }
   create(props: any) {
     return new pixi.Sprite()
   }
   update(node: pixi.Sprite, key: string, val: any, props: SpriteProps): void {
-    updateContainer(node, key, val, props)
+    switch (key) {
+      case 'anchorX':
+        if (node.anchor.x !== val) node.anchor.x = val
+        break
+      case 'anchorY':
+        if (node.anchor.y !== val) node.anchor.y = val
+        break
+      default:
+        baseUpdate(node, key, val, props)
+        break
+    }
   }
 }
 
@@ -189,13 +201,13 @@ export interface GraphicsProps extends ContainerProps {
   draw: (g: pixi.Graphics) => void
 }
 
-export class Graphics extends RawObjectWrapper<GraphicsProps> {
+export class Graphics extends NativeWrapper<GraphicsProps> {
   getRawClass() { return pixi.Graphics }
   create(props: any) {
     return new pixi.Graphics()
   }
   update(node: pixi.Graphics, key: string, val: any, props: GraphicsProps): void {
-    updateContainer(node, key, val, props)
+    baseUpdate(node, key, val, props)
     if (props.draw) {
       props.draw(node)
     }
@@ -209,7 +221,7 @@ export interface TextProps extends ContainerProps {
   dirty?: boolean
 }
 
-export class Text extends RawObjectWrapper<TextProps> {
+export class Text extends NativeWrapper<TextProps> {
   private static _skips = ['style']
   private static _skipsSet = new Set(Text._skips)
   getRawClass() { return pixi.Text }
@@ -220,7 +232,7 @@ export class Text extends RawObjectWrapper<TextProps> {
     if (Text._skipsSet.has(key)) {
       updateObjectProp(node, key, val, props)
     } else {
-      updateContainer(node, key, val, props)
+      baseUpdate(node, key, val, props)
     }
   }
 }
