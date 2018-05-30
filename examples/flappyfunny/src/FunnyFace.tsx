@@ -43,7 +43,7 @@ export const actions = {
     }
     return [state, Cmd.none]
   },
-  up: () => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
+  jump: () => (state: State, actions: Actions): Hydux.AR<State, Actions> => {// jump
     if (!state.dead) {
       state = { ...state }
       state.vy = -2

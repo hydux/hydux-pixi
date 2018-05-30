@@ -26,6 +26,7 @@ app.renderer.view.style.display = 'block'
 app.renderer.autoResize = true
 
 app.view.id = 'canvas'
+app.view.style.position = 'static'
 app.view['pixiApp'] = app
 // app.renderer.resize(window.innerWiadth, window.innerHeight)
 

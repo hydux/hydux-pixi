@@ -52,7 +52,7 @@ export const initCmd = () =>
       document.addEventListener('keydown', e => {
         if (e.key === ' ') {
           actions.start()
-          actions.face.up()
+          actions.face.jump()
         }
       })
     }),
@@ -73,7 +73,7 @@ export const actions = {
   click: () => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
     return [state, Cmd.ofSub(_ => {
       actions.start()
-      actions.face.up()
+      actions.face.jump()
     })]
   },
   update: (delta: number) => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
@@ -85,22 +85,22 @@ export const actions = {
     state.pipePairs.forEach(
       pipe => {
         const face = state.face
-        if (
+        if (// Add score
           pipe.x > pixiApp.width / 2 - face.width / 2 - T.pipeUp.width / 2 &&
           pipe.x - deltaX < pixiApp.width / 2 - face.width / 2 - T.pipeUp.width / 2
         ) {
           state.score += 1
         }
         pipe.x -= deltaX
-        if (pipe.x < -T.pipeUp.width) {
+        if (pipe.x < -T.pipeUp.width) {// reuse pipe
           pipe.x += state.pipeWidth
         }
         if (
           Math.abs(pipe.x + T.pipeUp.width / 2 - face.x) < T.pipeUp.width / 2 &&
           Math.abs(face.y - pipe.y - pixiApp.skyHeight() / 2) > SpaceHeight / 2
-        ) {
+        ) {// hit pipe
           face.dead = true
-        } else if (
+        } else if (// hit land
           face.y + face.height / 2 > pixiApp.skyHeight()
         ) {
           face.dead = true
