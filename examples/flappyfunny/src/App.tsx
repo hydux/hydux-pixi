@@ -14,7 +14,7 @@ const landHeight = pixiApp.landHeight
 const SpaceHeight = pixiApp.SpaceHeight
 
 function PipePair({ x, y }: { x: number, y: number }, children: any) {
-  const baseY = (T.pipeDown.height + T.pipeUp.height + SpaceHeight - (pixiApp.height - landHeight())) / 2
+  const baseY = (T.pipeDown.height + T.pipeUp.height + SpaceHeight - (pixiApp.skyHeight())) / 2
   return (
     <Container>
       <Sprite texture={T.pipeDown} x={x} y={-baseY + y} />
@@ -23,17 +23,14 @@ function PipePair({ x, y }: { x: number, y: number }, children: any) {
   )
 }
 export const initState = () => {
-  let last = { x: 0, y: 0 }
   let pipeMargin = T.pipeUp.width + 80.
   const pipePairs = Array(
     (pixiApp.width / pipeMargin + 1) | 0
   ).fill(0).map(
-    (_, i, arr) => (
-      last = {
-        x: i * (pipeMargin + T.pipeUp.width) + pixiApp.width + 10,
-        y: last.y + Math.random() * 200 - 100,
-      }
-    )
+    (_, i, arr) => ({
+      x: i * (pipeMargin + T.pipeUp.width) + pixiApp.width + 10,
+      y: Math.random() * 200 - 100,
+    })
   )
   return {
     face: FunnyFace.initState(),
@@ -52,7 +49,6 @@ export const initCmd = () =>
       document.addEventListener('keydown', e => {
         if (e.key === ' ') {
           actions.start()
-          actions.face.jump()
         }
       })
     }),
@@ -68,19 +64,18 @@ export const actions = {
   } as FunnyFace.Actions,
   start: () => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
     state = { ...state, started: true }
-    return [state, Cmd.none]
+    return [state, Cmd.ofSub(_ => _.face.jump())]
   },
   click: () => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
     return [state, Cmd.ofSub(_ => {
       actions.start()
-      actions.face.jump()
     })]
   },
   update: (delta: number) => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
     if (!state.started || state.face.dead) {
       return
     }
-    let deltaX = delta * .5
+    let deltaX = delta * 1
     state = { ...state, offsetX: state.offsetX - deltaX }
     state.pipePairs.forEach(
       pipe => {
@@ -126,7 +121,7 @@ export const view = (state: State, actions: Actions) => {
         tilePositionX={state.offsetX}
       />
       {FunnyFace.view(state.face, actions.face)}
-      <Text x={pixiApp.width - 130} y={30} text={state.score + '分'} />
+      <Text x={pixiApp.width - 130} y={30} text={state.score + '分'} style={{ fill: 'white' }} />
     </Container>
   )
 }

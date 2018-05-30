@@ -33,7 +33,6 @@ export default function withVdom<State, Actions, E = Node>(container: E, options
       const render = () => {
         if (typeof options.stats !== 'undefined') {
           options.stats.begin()
-          // vdomd
           renderPixi(container as any, view[0](view[1], view[2]))
           options.stats.end()
         } else {

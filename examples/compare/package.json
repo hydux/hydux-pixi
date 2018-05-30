@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "cp": "cp ./index.html ./static/ && cp -R ./static/ ../../docs/compare",
+    "cp": "cp ./index.html ./static/ && rm -r ../../docs/compare &&  cp -R ./static/ ../../docs/compare",
     "build": "cross-env NODE_ENV=production webpack --config webpack.config.js && npm run cp",
     "start": "cross-env NODE_ENV=development webpack-dev-server --progress --config webpack.config.js",
     "build:dll:dev": "cross-env NODE_ENV=development webpack --config ./webpack.config.dll.js --progress --colors",
