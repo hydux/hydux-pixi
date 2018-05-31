@@ -14,22 +14,20 @@ function makeComponentRoot<T extends typeof PIXIComponent>(CompClass: T) {
       if (!comp.shouldUpdate(comp.state, props)) {
         return
       }
-      super.updateAll(node, props)
+      comp.props = props
       comp.forceUpdate()
     }
     create<P>(props: P | null) {
-      const comp = new CompClass()
+      const comp = new CompClass(props)
       const el: PIXI.Container = new PIXI.Container()
       el[CompKey] = comp
       comp.container = el
       comp.forceUpdate()
-      el.on('added', () => comp.onDidMount())
-      el.on('removed', () => comp.onDidUnmount())
       return el
     }
   }
 }
-export class PIXIComponent<P = {}, S = {}> extends Component {
+export class PIXIComponent<P = {}, S = {}> extends Component<P> {
   container: PIXI.Container
   _builtin: any
   _api = api

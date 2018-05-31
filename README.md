@@ -3,10 +3,7 @@
 
 [![Build Status](https://travis-ci.org/hydux/hydux-pixi.svg?branch=master)](https://travis-ci.org/hydux/hydux-pixi) [![npm](https://img.shields.io/npm/v/hydux-pixi.svg)](https://www.npmjs.com/package/hydux-pixi) [![npm](https://img.shields.io/npm/dm/hydux-pixi.svg)](https://www.npmjs.com/package/hydux-pixi)
 
-WIP
-
-<!--
-Data-driven appication in hydux, in the Elm way, inspired by apollo-client.
+A light-weight High performance
 
 ## Install
 

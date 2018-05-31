@@ -34,10 +34,7 @@ if (__DEV__) {
   console.log(`window['pixiApp']`, window['pixiApp'])
   if (window['pixiApp']) {
     let oldApp: pixi.Application = window['pixiApp']
-    oldApp.ticker.stop()
-    oldApp.ticker.destroy()
     oldApp.destroy(true)
-    console.log('aa')
   }
   window['pixiApp'] = app
 }
@@ -56,3 +53,22 @@ export let stats =
 export const landHeight = () => T.land.height - 20
 export const SpaceHeight = 120
 export const skyHeight = () => height - landHeight()
+
+export interface Rect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export function hitRect(rect1: Rect, rect2: Rect) {
+  if (
+    rect1.x + rect1.width > rect2.x &&
+    rect1.x < rect2.x + rect2.width &&
+    rect1.y + rect1.height > rect2.y &&
+    rect1.y < rect2.y + rect2.height
+  ) {
+    return true
+  }
+  return false
+}

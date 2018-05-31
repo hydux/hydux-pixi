@@ -1,4 +1,3 @@
-import '../../../../src/jsx'
 import * as pixi from 'pixi.js'
 import '../modules'
 import { Container, withPixiApp, Stage, Sprite, render } from '@inlet/react-pixi/dist/react-pixi.production.es5.js'

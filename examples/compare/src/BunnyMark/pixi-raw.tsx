@@ -1,6 +1,5 @@
 import { h, patch } from '../../../../src/vdom'
 import { PIXIComponent } from '../../../../src/vdom/pixi'
-import '../../../../src/jsx'
 import * as pixi from 'pixi.js'
 import * as Hydux from '../../../../../hydux'
 import Textures from '../textures'

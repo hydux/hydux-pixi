@@ -76,11 +76,14 @@ export abstract class NativeWrapper<P = {}> {
 
 const CompKey = '@gl-vdom/comp'
 export abstract class Component<P = {}, S = {}> {
-  props: P = {} as P
+  props: P & Attributes<P> = {} as P
   state: S = {} as S
   container: any
   abstract _api: ICustomAPI<any>
   private _rafId = 0
+  constructor(props: P) {
+    this.props = props
+  }
   abstract getBuiltin(): typeof NativeWrapper
   shouldUpdate(nextState, nextProps) {
     return true
@@ -109,10 +112,11 @@ export abstract class Component<P = {}, S = {}> {
   }
   forceUpdate() {
     const view = this.render()
-    if (view !== null && typeof (view) !== 'boolean') {
-      patchChildren(
+    if (view != null && typeof (view) !== 'boolean') {
+      patch(
         this.container,
-        [view],
+        0,
+        view,
         this._api,
       )
     }
@@ -120,7 +124,7 @@ export abstract class Component<P = {}, S = {}> {
   onDidMount() {
     // ignore
   }
-  onDidUnmount() {
+  onWillUnmount() {
     // ignore
   }
   render(): null | VNode | boolean {
@@ -147,42 +151,92 @@ export type VNode<P = any> =
 [ComponentFactory<P>, null | object, [ComponentFactory<P>, null | object, any[]][]]
 
 function createElement<Node>(vnode: VNode): Node {
-  const node = vnode[0].prototype.create(vnode[1])
+  const node = (vnode[0].prototype as NativeWrapper).create(vnode[1])
   const attrs = vnode[1] as { oncreate?: Function } | null
   if (attrs && attrs.oncreate) {
     attrs.oncreate(node)
   }
   return node
 }
+
+function mountComponent<Node>(parent: Node, i, api: ICustomAPI<Node>) {
+  const node = api.getChildAt(parent, i)
+  if (Is.def(node) && Is.def(node[CompKey])) {
+    try {
+      (node[CompKey] as Component).onDidMount()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+}
+
+function unmountComponent<Node>(node: Node, api: ICustomAPI<Node>) {
+  if (Is.def(node[CompKey])) {
+    try {
+      (node[CompKey] as Component).onWillUnmount()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+  for (let i = 0; i < api.getChildrenCount(node); i++) {
+    unmountComponent(api.getChildAt(node, i), api)
+  }
+}
+
+function update<Node>(node: Node, attrs: Attributes<any> | null, proto: NativeWrapper) {
+  if (attrs !== null) {
+    let onupdate = attrs['onupdate']
+    if (onupdate && onupdate(node, attrs)) {
+      return
+    }
+    proto.updateAll(node, attrs)
+  }
+}
+
 export function patch<Node>(parent: Node, i: number, vnode: VNode, api: ICustomAPI<Node>) {
   let [Comp, attrs, children] = vnode
   let node = api.getChildAt(parent, i) as Node | undefined
   let proto = Comp.prototype
+  let isComponent = false
+  let isCreate = false
   if (Is.def((proto as NativeWrapper).getRawClass)) {
     // ignore
   } else if (Is.def((proto as Component).getBuiltin)) { // stateful component
-    Comp = vnode[0] = (proto as Component).getBuiltin() as any
+    vnode[0] = (proto as Component).getBuiltin() as any
+    proto = vnode[0].prototype
     vnode[1] = attrs = attrs || {}
-    proto = Comp.prototype
     attrs['children'] = children
+    isComponent = true
   } else {
     return patch(parent, i, (Comp as any)(attrs, children), api)
   }
   if (typeof node === 'undefined') {
     node = createElement<Node>(vnode)
     api.addChild(parent, node)
-  } else if (node.constructor !== (proto as NativeWrapper).getRawClass()) {
-    node = createElement(vnode)
-    api.replaceChildAt(parent, i, node!)
-  }
-  if (attrs !== null) {
-    let onupdate = attrs['onupdate']
-    if (onupdate && onupdate(node, attrs)) {
-      return
+    mountComponent(parent, api.getChildrenCount(parent) - 1, api)
+    isCreate = true
+  } else {
+    const isNotSameNode = node.constructor !== (proto as NativeWrapper).getRawClass()
+    const isNotSameComp =
+      (!Is.def(node[CompKey]) && isComponent) ||
+      (Is.def(node[CompKey]) && (
+        !isComponent ||
+        node[CompKey] as Component).constructor !== Comp
+      )
+    if (isNotSameNode || isNotSameComp) {
+      node = createElement<Node>(vnode)
+      unmountComponent(api.getChildAt(parent, i), api)
+      api.replaceChildAt(parent, i, node!)
+      mountComponent(parent, i, api)
+      isCreate = true
     }
-    (proto as NativeWrapper).updateAll(node, attrs)
   }
-  patchChildren(node!, children, api)
+  if (!isComponent || !isCreate) {
+    update(node, attrs, proto)
+  }
+  if (!isComponent) {
+    patchChildren(node!, children, api)
+  }
 }
 
 function patchChildren<Node>(node: Node, children: VNode[], api: ICustomAPI<Node>) {
@@ -195,6 +249,7 @@ function patchChildren<Node>(node: Node, children: VNode[], api: ICustomAPI<Node
     i >= children.length;
     i--
   ) {
+    unmountComponent(node, api)
     api.removeChildAt(node, i)
   }
 }
