@@ -3,40 +3,26 @@
 
 [![Build Status](https://travis-ci.org/hydux/hydux-pixi.svg?branch=master)](https://travis-ci.org/hydux/hydux-pixi) [![npm](https://img.shields.io/npm/v/hydux-pixi.svg)](https://www.npmjs.com/package/hydux-pixi) [![npm](https://img.shields.io/npm/dm/hydux-pixi.svg)](https://www.npmjs.com/package/hydux-pixi)
 
-[PIXI.js](https://pixijs.io/) renderer for [Hydux<sup style="font-size: 10px;">TM</sup>](https://hydux.github.io/hydux).
+[PIXI.js](https://pixijs.io/) renderer for [Hydux<sup style="font-size: 10px;">TM</sup>](https://github.com/hydux/hydux).
 
 This package contains two part, the first is a high-performance vdom library optimized for graphic libraries, currently support pixi.js; the second is the hydux binding for this vdom.
 
 ## Why not react-pixi?
 
-React-pixi has really pool performance, not only just the overload of the vdom diff, but also React is mainly optimized for DOM. DOM is slow, so vdom libraries like react should reduce the DOM operations as less as possible.
+React-pixi has really pool performance, not only just the overload of the vdom diffing, but also React is mainly optimized for DOM. DOM is slow, so vdom libraries like react should reduce the DOM operations as less as possible.
 
-But objects in graphics libraries(GL) like PIXI.js or three.js are just normal JS objects, mutating or creating these objects are quick fast because they won't trigger relayout & repaiting, but GL will rendering these objects each [animation frame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) (60fps).
+But objects in graphics libraries(GL) like PIXI.js or three.js are just normal JS objects, mutating or creating these objects are quite fast because they won't trigger relayout & repaiting, and GL will rendering these objects each [animation frame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) (60fps).
 
 ### Bunny bench
 
-The result of bunny bench on my laptop(macOS Sierra, 2.7 GHz Intel Core i5, 16 GB 1867 MHz DDR3, Intel Iris Graphics 6100 1536 MB) shows it's almost the same performance of raw PIXI.js, and about 3x-4x faster then react-pixi.
+The results of bunny bench on my laptop(macOS Sierra, 2.7 GHz Intel Core i5, 16 GB 1867 MHz DDR3, Intel Iris Graphics 6100 1536 MB) show it's almost the same performance of raw PIXI.js, and about 3x-4x faster then libraries like react-pixi.
 
-<img src="docs/media/raw.png" style="width: 200px;">
-<img src="docs/media/gl-vdom.png" style="width: 200px;">
-<img src="docs/media/react-pixi-fiber.png" style="width: 200px;">
-<img src="docs/media/react-pixi-fiber.png" style="width: 200px;">
+![](https://github.com/hydux/hydux-pixi/raw/master/docs/media/compare.png)
 
 (The second one is ours.)
 
 You can test it online: https://hydux.github.io/hydux-pixi/compare/?type=pixi-raw
 
-### Dig deeper
-
-TLNR;
-
-After some digging and experiment, I find the main issue of vdom for graphics is not the diffing, but the GC. Js is really fast, you won'd even notice it, but GC might slow down the fps because "stop-the-would". This will delay the animation frame and cause frame drop.
-
-Well the vdom algorithm will create lots of small objects, this seems unavoidable. But most GC algorithm would divides the heap into several generations, allocation/collection in new spaces are very cheap, but not for old spaces(if you want to read more about GC in v8, you can take this post: <http://www.jayconrod.com/posts/55/a-tour-of-v8-garbage-collection>).
-
-Most vdom libraries (including react) are diff the current vdom with the last vdom, this is right(for most cast), because it's fast, controllable, but the reference of old vdom will cause this big object live longer (for graphics rendering it will be collect in next animation frame), until it moved to old spaces, and puts much more pressure to v8's GC.
-
-In this vdom, instead of keeping the reference of last vdom, we directly diff the vdom to PIXI.js objects, although we still create lots of small objects, but they live much shorter, and this speed up a lot! It's almost the same as raw PIXI.js, and about 3x-4x then before. For the future, we can even create three.js bindings!
 
 ## Install
 
@@ -168,6 +154,18 @@ app({
   view,
 })
 ```
+
+### How
+
+TLNR;
+
+After some digging and experiment, I find the main issue of vdom for graphics is not the diffing, but the GC. Js is really fast, you won'd even notice it, but GC might slow down the fps because of "stop-the-would". This will delay the animation frame and cause frame drop.
+
+Well the vdom algorithm will create lots of small objects, this seems unavoidable. But most GC algorithm would divides the heap into several generations, allocation/collection in new spaces are very cheap, but not for old spaces(if you want to read more about GC in v8, you can take this post: <http://www.jayconrod.com/posts/55/a-tour-of-v8-garbage-collection>).
+
+Most vdom libraries (including react) are diffing the vdom with last one, this is right(for most cast), because it's fast, controllable, and well engineered. But the reference of old vdom will cause this big object live longer (for graphics rendering it will be collect in next animation frame), until it moved to old spaces, and puts much more pressure to v8's GC.
+
+In this vdom, instead of keeping the reference of last vdom, we directly diff the vdom to PIXI.js objects, although we still create lots of small objects, but they live much shorter, and this speed up a lot! It's almost the same as raw PIXI.js, and about 3x-4x then before. For the future, we can even create three.js bindings!
 
 ## Example App
 
