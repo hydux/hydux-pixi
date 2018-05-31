@@ -1,6 +1,6 @@
 {
   "name": "hydux-pixi",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "PIXI.js renderer for hydux shipped with a high performance vdom for graphics libraries.",
   "main": "./lib/index.js",
   "typings": "./lib/index",
