@@ -1,13 +1,13 @@
 import { h } from '../../../src/vdom'
 import { render as renderPixi } from '../../../src/vdom/pixi'
-import '../../../src/jsx.d'
+import '../../../src/jsx'
 import * as pixi from 'pixi.js'
-import { Container, Sprite, Graphics, Text, TilingSprite } from '../../../src/components'
+import { Container, Sprite, Graphics, Text, TilingSprite } from '../../../src/vdom/pixi/components'
 import * as Hydux from '../../../../hydux'
 import { Textures as T } from './textures'
-import ImmuList from 'hydux-mutator/lib/collections/list'
+
 const { Cmd } = Hydux
-import * as pixiApp from './pixi-app'
+import * as Utils from './utils'
 export const initState = () => {
   const size = 30
   return {
@@ -16,8 +16,8 @@ export const initState = () => {
     rotation: 0,
     anchorX: .5,
     anchorY: .5,
-    x: (pixiApp.width) / 2,
-    y: (pixiApp.height) / 2,
+    x: (Utils.width) / 2,
+    y: (Utils.height) / 2,
     vy: 0,
     gravityY: .1,
     dead: false,
@@ -28,13 +28,13 @@ let ticker
 let addBunnies
 export const initCmd = () =>
   Cmd.ofSub<Actions>(actions => {
-    pixiApp.app.ticker.add(actions.update)
+    Utils.pixiApp.ticker.add(actions.update)
   })
 
 export const actions = {
   update: (delta: number, started = true) => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
     state = { ...state }
-    if (state.y + state.width / 2 < pixiApp.skyHeight()) {
+    if (state.y + state.width / 2 < Utils.skyHeight()) {
       state.rotation += delta * .2
       if (started) {
         state.y += state.vy

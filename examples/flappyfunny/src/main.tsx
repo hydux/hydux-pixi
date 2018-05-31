@@ -2,13 +2,13 @@ import './types'
 import * as Hydux from 'hydux'
 import withPixi from '../../../src/index'
 import * as App from './App'
-import * as pixiApp from './pixi-app'
+import * as Utils from './utils'
 import * as Textures from './textures'
 import * as pixi from 'pixi.js'
 
 const Cmd = Hydux.Cmd
 
-let app = withPixi<State, Actions, PIXI.Container>(pixiApp.app.stage, { stats: pixiApp.stats })(Hydux.app)
+let app = withPixi<State, Actions, PIXI.Container>(Utils.pixiApp.stage, { stats: Utils.stats })(Hydux.app)
 if (__DEV__) {
   const hmr = require('hydux/lib/enhancers/hmr').default
   app = hmr()(app)
@@ -21,10 +21,10 @@ let initState = () => {
 }
 
 let initCmd = () => {
-  if (pixiApp.app['initCmd']) {
+  if (Utils.pixiApp['initCmd']) {
     return Cmd.none
   }
-  pixiApp.app['initCmd'] = true
+  Utils.pixiApp['initCmd'] = true
   return Cmd.batch(
     Cmd.map((_: Actions) => _.app, App.initCmd()),
   )

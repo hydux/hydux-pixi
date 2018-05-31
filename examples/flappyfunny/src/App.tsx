@@ -1,36 +1,48 @@
 import { h } from '../../../src/vdom'
-import { render as renderPixi } from '../../../src/vdom/pixi'
-import '../../../src/jsx.d'
 import * as pixi from 'pixi.js'
-import { Container, Sprite, Graphics, Text, TilingSprite } from '../../../src/components'
-import * as Hydux from '../../../../hydux'
+import { Container, Sprite, Graphics, Text, TilingSprite } from '../../../src/vdom/pixi/components'
+import * as Hydux from 'hydux'
 import { Textures as T } from './textures'
-import ImmuList from 'hydux-mutator/lib/collections/list'
+
 const { Cmd } = Hydux
-import * as pixiApp from './pixi-app'
+import * as Utils from './utils'
 import * as FunnyFace from './FunnyFace'
 
-const landHeight = pixiApp.landHeight
-const SpaceHeight = pixiApp.SpaceHeight
+const landHeight = Utils.landHeight
+const SpaceHeight = Utils.SpaceHeight
 
-function PipePair({ x, y }: { x: number, y: number }, children: any) {
-  const baseY = (T.pipeDown.height + T.pipeUp.height + SpaceHeight - (pixiApp.skyHeight())) / 2
+function PipePair({ x, y1, y2 }: { x: number, y1: number, y2: number }, children: any) {
   return (
     <Container>
-      <Sprite texture={T.pipeDown} x={x} y={-baseY + y} />
-      <Sprite texture={T.pipeUp} x={x} y={-baseY + SpaceHeight + T.pipeDown.height + y} />
+      <Sprite texture={T.pipeDown} x={x} y={y1} />
+      <Sprite texture={T.pipeUp} x={x} y={y2} />
     </Container>
   )
 }
+
+function createPipePair(x: number) {
+  const baseY = (T.pipeDown.height + T.pipeUp.height + SpaceHeight - (Utils.skyHeight())) / 2
+  const offsetY = Math.random() * 200 - 100
+  return {
+    x,
+    y1: -baseY + offsetY,
+    y2: -baseY + SpaceHeight + T.pipeDown.height + offsetY,
+    width: T.pipeDown.width,
+    height: T.pipeDown.height,
+  }
+}
+
+const copy = Object.assign
+
 export const initState = () => {
   let pipeMargin = T.pipeUp.width + 80.
   const pipePairs = Array(
-    (pixiApp.width / pipeMargin + 1) | 0
+    (Utils.width / pipeMargin + 1) | 0
   ).fill(0).map(
-    (_, i, arr) => ({
-      x: i * (pipeMargin + T.pipeUp.width) + pixiApp.width + 10,
-      y: Math.random() * 200 - 100,
-    })
+    (_, i, arr) => {
+      const x = i * (pipeMargin + T.pipeUp.width) + Utils.width + 10
+      return createPipePair(x)
+    }
   )
   return {
     face: FunnyFace.initState(),
@@ -45,7 +57,7 @@ export const initState = () => {
 export const initCmd = () =>
   Cmd.batch(
     Cmd.ofSub<Actions>(actions => {
-      pixiApp.app.ticker.add(actions.update)
+      Utils.pixiApp.ticker.add(actions.update)
       document.addEventListener('keydown', e => {
         if (e.key === ' ') {
           actions.start()
@@ -63,7 +75,11 @@ export const actions = {
     }
   } as FunnyFace.Actions,
   start: () => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
-    state = { ...state, started: true }
+    if (state.face.dead) {
+      state = initState()
+    } else if (!state.started) {
+      state = { ...state, started: true }
+    }
     return [state, Cmd.ofSub(_ => _.face.jump())]
   },
   click: () => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
@@ -78,25 +94,51 @@ export const actions = {
     let deltaX = delta * 1
     state = { ...state, offsetX: state.offsetX - deltaX }
     state.pipePairs.forEach(
-      pipe => {
+      (pipe, i) => {
         const face = state.face
+        const faceRect = { // anchor
+          x: face.x - face.width / 2,
+          y: face.y - face.height / 2,
+          width: face.width,
+          height: face.height,
+        }
         if (// Add score
-          pipe.x > pixiApp.width / 2 - face.width / 2 - T.pipeUp.width / 2 &&
-          pipe.x - deltaX < pixiApp.width / 2 - face.width / 2 - T.pipeUp.width / 2
+          Utils.hitRect(faceRect, {
+            x: pipe.x + pipe.width / 2,
+            y: pipe.y1 + T.pipeDown.height,
+            width: 0,
+            height: SpaceHeight,
+          }) &&
+          !Utils.hitRect(faceRect, {
+            x: pipe.x + deltaX + pipe.width / 2,
+            y: pipe.y1 + T.pipeDown.height,
+            width: 0,
+            height: SpaceHeight,
+          })
         ) {
           state.score += 1
         }
         pipe.x -= deltaX
         if (pipe.x < -T.pipeUp.width) {// reuse pipe
-          pipe.x += state.pipeWidth
+          state.pipePairs[i] = pipe = createPipePair(pipe.x + state.pipeWidth)
         }
         if (
-          Math.abs(pipe.x + T.pipeUp.width / 2 - face.x) < T.pipeUp.width / 2 &&
-          Math.abs(face.y - pipe.y - pixiApp.skyHeight() / 2) > SpaceHeight / 2
+          Utils.hitRect(faceRect, {
+            x: pipe.x,
+            y: pipe.y1,
+            width: pipe.width,
+            height: pipe.height,
+          }) ||
+          Utils.hitRect(faceRect, {
+            x: pipe.x,
+            y: pipe.y2,
+            width: pipe.width,
+            height: pipe.height,
+          })
         ) {// hit pipe
           face.dead = true
         } else if (// hit land
-          face.y + face.height / 2 > pixiApp.skyHeight()
+          face.y + face.height / 2 > Utils.skyHeight()
         ) {
           face.dead = true
         }
@@ -111,17 +153,17 @@ export const view = (state: State, actions: Actions) => {
     <Container interactive interactiveChildren onPointertap={actions.click}>
       <Sprite texture={T.sky} />
       {state.pipePairs.map(
-        s => <PipePair x={s.x} y={s.y} />
+        s => <PipePair x={s.x} y1={s.y1} y2={s.y2} />
       )}
       <TilingSprite
         texture={T.land}
-        width={pixiApp.width}
+        width={Utils.width}
         x={0}
-        y={pixiApp.height - landHeight()}
+        y={Utils.height - landHeight()}
         tilePositionX={state.offsetX}
       />
       {FunnyFace.view(state.face, actions.face)}
-      <Text x={pixiApp.width - 130} y={30} text={state.score + '分'} style={{ fill: 'white' }} />
+      <Text x={Utils.width - 130} y={30} text={'score: ' + state.score} style={{ fill: 'white' }} />
     </Container>
   )
 }

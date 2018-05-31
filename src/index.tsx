@@ -12,7 +12,7 @@ export interface Options<E> {
 }
 
 const __HYDUX_RENDER_NODE__ = '__HYDUX_RENDER_NODE__'
-export default function withVdom<State, Actions, E = Node>(container: E, options: Partial<Options<E>> = {}): (app: Hydux.App<State, Actions>) => Hydux.App<State, Actions> {
+export default function withPixi<State, Actions, E = Node>(container: E, options: Partial<Options<E>> = {}): (app: Hydux.App<State, Actions>) => Hydux.App<State, Actions> {
   let rafId
   let _options = {
     ...options

@@ -1,5 +1,5 @@
 
-import { NativeWrapper, Is, patch, Component, VNode, ICustomAPI } from '.'
+import { NativeWrapper, Is, patch, Component, VNode, ICustomAPI } from '../'
 import * as pixi from 'pixi.js'
 
 const CompKey = '@gl-vdom/comp'
@@ -11,7 +11,7 @@ function makeComponentRoot<T extends typeof PIXIComponent>(CompClass: T) {
     }
     updateAll<P>(node: pixi.Container, props: P) {
       const comp = node[CompKey] as Component
-      if (!comp.shouldUpdate(comp.state, props)) {
+      if (!comp.shouldUpdate(props, comp.state)) {
         return
       }
       comp.props = props

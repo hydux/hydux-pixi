@@ -3,7 +3,40 @@
 
 [![Build Status](https://travis-ci.org/hydux/hydux-pixi.svg?branch=master)](https://travis-ci.org/hydux/hydux-pixi) [![npm](https://img.shields.io/npm/v/hydux-pixi.svg)](https://www.npmjs.com/package/hydux-pixi) [![npm](https://img.shields.io/npm/dm/hydux-pixi.svg)](https://www.npmjs.com/package/hydux-pixi)
 
-A light-weight High performance
+[PIXI.js](https://pixijs.io/) renderer for [Hydux<sup style="font-size: 10px;">TM</sup>](https://hydux.github.io/hydux).
+
+This package contains two part, the first is a high-performance vdom library optimized for graphic libraries, currently support pixi.js; the second is the hydux binding for this vdom.
+
+## Why not react-pixi?
+
+React-pixi has really pool performance, not only just the overload of the vdom diff, but also React is mainly optimized for DOM. DOM is slow, so vdom libraries like react should reduce the DOM operations as less as possible.
+
+But objects in graphics libraries(GL) like PIXI.js or three.js are just normal JS objects, mutating or creating these objects are quick fast because they won't trigger relayout & repaiting, but GL will rendering these objects each [animation frame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) (60fps).
+
+### Bunny bench
+
+The result of bunny bench on my laptop(macOS Sierra, 2.7 GHz Intel Core i5, 16 GB 1867 MHz DDR3, Intel Iris Graphics 6100 1536 MB) shows it's almost the same performance of raw PIXI.js, and about 3x-4x faster then react-pixi.
+
+<img src="docs/media/raw.png" style="width: 200px;">
+<img src="docs/media/gl-vdom.png" style="width: 200px;">
+<img src="docs/media/react-pixi-fiber.png" style="width: 200px;">
+<img src="docs/media/react-pixi-fiber.png" style="width: 200px;">
+
+(The second one is ours.)
+
+You can test it online: https://hydux.github.io/hydux-pixi/compare/?type=pixi-raw
+
+### Dig deeper
+
+TLNR;
+
+After some digging and experiment, I find the main issue of vdom for graphics is not the diffing, but the GC. Js is really fast, you won'd even notice it, but GC might slow down the fps because "stop-the-would". This will delay the animation frame and cause frame drop.
+
+Well the vdom algorithm will create lots of small objects, this seems unavoidable. But most GC algorithm would divides the heap into several generations, allocation/collection in new spaces are very cheap, but not for old spaces(if you want to read more about GC in v8, you can take this post: <http://www.jayconrod.com/posts/55/a-tour-of-v8-garbage-collection>).
+
+Most vdom libraries (including react) are diff the current vdom with the last vdom, this is right(for most cast), because it's fast, controllable, but the reference of old vdom will cause this big object live longer (for graphics rendering it will be collect in next animation frame), until it moved to old spaces, and puts much more pressure to v8's GC.
+
+In this vdom, instead of keeping the reference of last vdom, we directly diff the vdom to PIXI.js objects, although we still create lots of small objects, but they live much shorter, and this speed up a lot! It's almost the same as raw PIXI.js, and about 3x-4x then before. For the future, we can even create three.js bindings!
 
 ## Install
 
@@ -13,77 +46,135 @@ yarn add hydux-pixi # or npm i hydux-pixi
 
 ## Usage
 
-This package can make your daily work easier. When you get lot's of views which just rendering some data from server, with less user interaction, this package will add isLoading flag and fetch error handler automatically for your each fetch function.
+### Use the vdom directly
 
-Let's say we already get an api function, like this fake one, it takes some parameters and return a promise can resolve as a data, or reject as an error (`message` propertie is required and would be used later).
+We support a simple React-like stateful component system, here is the methods that we support
 
-```ts
-const asyncApi = {
-  fetchCount(count: number, failed = false) {
-    return new Promise<number>(
-      (resolve, reject) =>
-        setTimeout(
-          () => {
-            failed
-              ? reject(new Error(`Fetch ${count} failed!`))
-              : resolve(count)
-          },
-          10,
-        )
-    )
-  },
+```tsx
+import { PIXIComponent, render } from 'hydux-pixi/lib/vdom/pixi/index'
+class App extends PIXIComponent<P, S> {
+  onDidMount(): void
+  shouldUpdate(nextProps: P, nextState: S): boolean
+  setState(s: Partial<S>): void
+  forceUpdate(): void
+  render(): void
+  onWillUnmount(): void
 }
-```
-
-Now we can make a loadable api to generate some state and actions.
-
-```ts
-import Loadable from 'hydux-pixi'
-const loadableApi = Loadable({
-  fetchCount: {
-    init: 0, // initial state
-    api: asyncApi.fetchCount,
-    // Custom actions to handleing fetch start/resolved/rejected event
-    // handleStart: (key: string) => (state, actions) => {/*...*/}
-    // handleSuccess: (key: string, data: Data) => (state, actions) => {/*...*/}
-    // handleError: (key: string, err: Error) => (state, actions) => {/*...*/}
-  },
-})
-const ctx = Hydux.app<typeof loadableApi.state, typeof loadableApi.actions>({
-  init: () => loadableApi.state,
-  actions: loadableApi.actions,
-  view: (state, actions) => {
-    // here we can access the fetch state and actions
-    return //
-  },
-})
 
 ```
 
-Here is the generated state and actions
+Here is a simple example:
 
-```ts
-state = {
-  fetchCount: {
-    isLoading: false, // whether is loading know
-    data: 0, // initial data from `param.init`, if fetch success it would be the the data from api
-    error: '', // rawError.message
-    rawError: null, // the raw error from fetch function
+```tsx
+
+import { h } from 'hydux-pixi/lib/vdom'
+import { PIXIComponent, render } from 'hydux-pixi/lib/vdom/pixi/index'
+import * as pixi from 'pixi.js'
+import { Container, Sprite, Graphics, Text } from 'hydux-pixi/lib/vdom/pixi/components/core'
+
+const pixiApp = new pixi.Application({
+  width: 500,
+  height: 500,
+})
+
+document.body.appendChild(pixiApp.view)
+
+const bunnyImage = PIXI.Texture.fromImage('https://pixijs.io/examples/required/assets/basics/bunny.png')
+
+class App extends PIXIComponent {
+  state = {
+    rotate: 0
+  }
+  onDidMount() {
+    pixiApp.ticker.add(
+      () => this.update()
+    )
+  }
+  update() {
+    this.setState((s: this['state']) => {
+      s.rotate = s.rotate + .5
+    })
+  }
+  render() {
+    return (
+      <Container>
+        <Sprite
+          texture={bunnyImage}
+          x={pixiApp.view.width / 2}
+          y={pixiApp.view.height / 2}
+          anchorX={.5}
+          anchorY={.5}
+        />
+      </Container>
+    )
   }
 }
 
-actions = {
-  fetchCount: (count: number, failed = false) => any // a generated action with same signature of fetch function
-  disableLoadingFlag: () => any // just as the name says, some times we don't want the loading animation, so we can simply disable them all!
-  enableLoadingFlag: () => any // just as the name says
+render(pixiApp.stage, <App />)
+```
+
+### Use with hydux
+
+```tsx
+import { h } from 'hydux-pixi/lib/vdom'
+import withPixi from 'hydux-pixi'
+import { Container, Sprite, Graphics, Text } from 'hydux-pixi/lib/vdom/pixi/components'
+import * as Hydux from 'hydux'
+const { Cmd } = Hydux
+
+let app = withPixi()(Hydux.app)
+
+
+const pixiApp = new pixi.Application({
+  width: 500,
+  height: 500,
+})
+document.body.appendChild(pixiApp.view)
+const bunnyImage = PIXI.Texture.fromImage('https://pixijs.io/examples/required/assets/basics/bunny.png')
+
+export const initState = () => {
+  return {
+    rotate: 0
+  }
 }
+
+export const initCmd = () =>
+  Cmd.ofSub<Actions>(_ => _.update())
+export const actions = {
+  update: () => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
+    state = {...state, rotate: state.rotate + .5}
+    return [state, Cmd.none]
+  },
+}
+export const view = (state: State, actions: Actions) => {
+  return (
+      <Container>
+        <Sprite
+          texture={bunnyImage}
+          x={pixiApp.view.width / 2}
+          y={pixiApp.view.height / 2}
+          anchorX={.5}
+          anchorY={.5}
+        />
+      </Container>
+  )
+}
+export type Actions = typeof actions
+export type State = ReturnType<typeof initState>
+
+app({
+  init: () => [initState(), initCmd()],
+  actions,
+  view,
+})
 ```
 
 ## Example App
 
 ```sh
 git clone https://github.com/hydux/hydux-pixi.git
-cd examples/counter
+yarn
+cd examples/flappyfunny
 yarn # or npm i
 npm start
 ```

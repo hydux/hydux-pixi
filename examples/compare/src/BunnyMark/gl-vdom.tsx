@@ -1,11 +1,11 @@
 import { h } from '../../../../src/vdom'
-import { PIXIComponent, render } from '../../../../src/vdom/pixi'
+import { PIXIComponent, render } from '../../../../src/vdom/pixi/index'
 import '../../../../src/jsx'
 import * as pixi from 'pixi.js'
-import { Container, Sprite, Graphics, Text } from '../../../../src/components/core'
+import { Container, Sprite, Graphics, Text } from '../../../../src/vdom/pixi/components/core'
 import * as Hydux from '../../../../../hydux'
 import Textures from '../textures'
-import ImmuList from 'hydux-mutator/lib/collections/list'
+
 const { Cmd } = Hydux
 import getPixiApp, { stats } from '../pixi-app'
 import * as Utils from './utils'

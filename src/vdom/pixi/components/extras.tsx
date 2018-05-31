@@ -1,15 +1,12 @@
 import * as pixi from 'pixi.js'
-import { Is, Component, NativeWrapper, h, Attributes } from '../vdom'
+import { Is, Component, NativeWrapper, h, Attributes } from '../../'
 import * as core from './core'
 
 export interface BitmapTextProps extends core.ContainerProps {
   text: string
   font?:
     | string
-    | {
-        name?: string
-        size?: number
-      }
+    | { name?: string; size?: number }
   align?: string
   tint?: number
   textWidth?: number

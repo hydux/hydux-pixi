@@ -1,5 +1,5 @@
 import * as pixi from 'pixi.js'
-import { Is, Component, NativeWrapper, h, Attributes } from '../vdom'
+import { Is, Component, NativeWrapper, h, Attributes } from '../../'
 import * as core from './core'
 
 export interface MeshProps extends core.ContainerProps {

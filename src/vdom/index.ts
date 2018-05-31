@@ -85,14 +85,14 @@ export abstract class Component<P = {}, S = {}> {
     this.props = props
   }
   abstract getBuiltin(): typeof NativeWrapper
-  shouldUpdate(nextState, nextProps) {
+  shouldUpdate(nextProps: P, nextState: S) {
     return true
   }
   updateState() {
     this.setState()
   }
-  setState(state?: Partial<S> | ((s: S) => Partial<S>)) {
-    if (!this.shouldUpdate(state, this.props)) {
+  setState(state?: Partial<S>) {
+    if (!this.shouldUpdate(this.props, { ...this.state as any, ...state as any })) {
       return
     }
     if (this._rafId) {
@@ -100,9 +100,6 @@ export abstract class Component<P = {}, S = {}> {
     }
     requestAnimationFrame(() => {
       if (Is.def(state)) {
-        if (Is.fn(state)) {
-          state = state(this.state)
-        }
         for (const key in state) {
           this.state[key] = state[key]!
         }

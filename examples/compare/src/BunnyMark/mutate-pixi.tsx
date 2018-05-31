@@ -1,10 +1,10 @@
 import * as Vdom from '../../../../src/vdom'
 import '../../../../src/jsx'
 import * as pixi from 'pixi.js'
-import { Container, Sprite, Graphics, Text } from '../../../../src/components/core'
+import { Container, Sprite, Graphics, Text } from '../../../../src/vdom/pixi/components/core'
 import * as Hydux from 'hydux'
 import Textures from '../textures'
-import ImmuList from 'hydux-mutator/lib/collections/list'
+
 const { Cmd } = Hydux
 import getPixiApp, { stats } from '../pixi-app'
 

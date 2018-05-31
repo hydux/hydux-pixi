@@ -3,7 +3,6 @@ import withPersist from 'hydux/lib/enhancers/persist'
 import withVdom from '../../../src/index'
 import { ActionsType } from 'hydux/lib/types'
 import './polyfill.js'
-import * as Demo from './Demo'
 import * as pixi from 'pixi.js'
 import { onload } from './textures'
 import getPixiApp from './pixi-app'
@@ -27,12 +26,12 @@ let type = url.searchParams.get('type') || ''
 const selectHtml = /* html */`
 <option value="none">choose framwork</option>
 <option value="pixi-raw">pixi-raw</option>
-<option value="gl-vdom">gl-vdom</option>
+<option value="gl-vdom">optimized-vdom</option>
 <option value="@inlet/react-pixi">@inlet/react-pixi</option>
 <option value="react-pixi-fiber">react-pixi-fiber</option>
-<option value="hydux-gl-vdom">hydux + gl-vdom</option>
+<option value="hydux-gl-vdom">hydux + optimized-vdom</option>
 <option value="hydux-vdom">hydux + normal vdom</option>
-<option value="hydux-mutate">hydux + mutate</option>
+<option value="hydux-mutate">hydux + raw pixi.js</option>
 `
 switch (type) {
   case 'gl-vdom':

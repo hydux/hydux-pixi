@@ -1,5 +1,5 @@
 import * as pixi from 'pixi.js'
-import { Is, Component, NativeWrapper, h, Attributes } from '../vdom'
+import { Is, Component, NativeWrapper, h, Attributes } from '../../'
 
 export type UserEventHandler = (event: pixi.interaction.InteractionEvent) => void
 export type PixiEventHander = (displayObject: pixi.DisplayObject) => void

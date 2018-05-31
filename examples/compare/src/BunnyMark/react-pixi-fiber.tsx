@@ -2,7 +2,7 @@ import * as pixi from 'pixi.js'
 import '../modules'
 import * as Hydux from '../../../../../hydux'
 import Textures from '../textures'
-import ImmuList from 'hydux-mutator/lib/collections/list'
+
 const { Cmd } = Hydux
 import getPixiApp, { stats } from '../pixi-app'
 import * as Utils from './utils'

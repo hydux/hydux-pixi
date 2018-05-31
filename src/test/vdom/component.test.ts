@@ -1,8 +1,8 @@
 import * as Utils from './utils'
 import * as assert from 'assert'
-import { Container, Sprite, Text, Graphics } from '../../components/core'
+import { Container, Sprite, Text, Graphics } from '../../vdom/pixi/components/core'
 import { h } from '../../vdom'
-import { PIXIComponent } from '../../vdom/pixi'
+import { PIXIComponent } from '../../vdom/pixi/'
 import * as fs from 'fs'
 
 const testTrees = Utils.testTrees

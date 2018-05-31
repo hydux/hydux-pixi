@@ -5,7 +5,7 @@ import * as pixi from 'pixi.js'
 import { Container, Sprite, Graphics, Text } from '../components/core'
 import * as Hydux from 'hydux'
 import Textures from '../textures'
-import ImmuList from 'hydux-mutator/lib/collections/list'
+
 const { Cmd } = Hydux
 import getPixiApp, { stats } from '../pixi-app'
 const h = Vdom.h

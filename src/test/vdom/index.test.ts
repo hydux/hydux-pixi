@@ -1,7 +1,7 @@
 import { h } from '../../vdom'
 import * as Utils from './utils'
 import * as assert from 'assert'
-import { Container, Sprite, Text, Graphics } from '../../components/core'
+import { Container, Sprite, Text, Graphics } from '../../vdom/pixi/components/core'
 import * as fs from 'fs'
 
 const testTrees = Utils.testTrees

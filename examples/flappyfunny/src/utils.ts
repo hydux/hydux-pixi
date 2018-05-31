@@ -12,22 +12,22 @@ if (window.innerHeight / window.innerWidth < 6 / 4) {
 }
 export { width, height }
 
-export let app = new pixi.Application({
+export let pixiApp = new pixi.Application({
   width,
   height,
   resolution: 1,
   antialias: true,
 })
-app.renderer.autoResize = true
-app.renderer.resize(width, height)
+pixiApp.renderer.autoResize = true
+pixiApp.renderer.resize(width, height)
 
-app.renderer.view.style.position = 'absolute'
-app.renderer.view.style.display = 'block'
-app.renderer.autoResize = true
+pixiApp.renderer.view.style.position = 'absolute'
+pixiApp.renderer.view.style.display = 'block'
+pixiApp.renderer.autoResize = true
 
-app.view.id = 'canvas'
-app.view.style.position = 'static'
-app.view['pixiApp'] = app
+pixiApp.view.id = 'canvas'
+pixiApp.view.style.position = 'static'
+pixiApp.view['pixiApp'] = pixiApp
 // app.renderer.resize(window.innerWiadth, window.innerHeight)
 
 if (__DEV__) {
@@ -36,10 +36,10 @@ if (__DEV__) {
     let oldApp: pixi.Application = window['pixiApp']
     oldApp.destroy(true)
   }
-  window['pixiApp'] = app
+  window['pixiApp'] = pixiApp
 }
 
-document.body.appendChild(app.view)
+document.body.appendChild(pixiApp.view)
 declare var Stats
 export let stats =
   window['stats'] ||
@@ -61,12 +61,12 @@ export interface Rect {
   height: number
 }
 
-export function hitRect(rect1: Rect, rect2: Rect) {
+export function hitRect(rect1: Rect, rect2: Rect, debounce = 5) {
   if (
-    rect1.x + rect1.width > rect2.x &&
-    rect1.x < rect2.x + rect2.width &&
-    rect1.y + rect1.height > rect2.y &&
-    rect1.y < rect2.y + rect2.height
+    rect1.x + rect1.width > rect2.x + debounce &&
+    rect1.x <= rect2.x + rect2.width - debounce &&
+    rect1.y + rect1.height > rect2.y + debounce &&
+    rect1.y <= rect2.y + rect2.height - debounce
   ) {
     return true
   }

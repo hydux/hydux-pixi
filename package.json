@@ -1,7 +1,7 @@
 {
-  "name": "hydux-data",
+  "name": "hydux-pixi",
   "version": "0.0.0",
-  "description": "Data-driven development for hydux, in the Elm way.",
+  "description": "PIXI.js renderer for hydux shipped with a high performance vdom for graphics libraries.",
   "main": "./lib/index.js",
   "typings": "./lib/index",
   "types": "./lib/index",
@@ -19,22 +19,25 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hydux/hydux-data.git"
+    "url": "git+https://github.com/hydux/hydux-pixi.git"
   },
   "keywords": [
+    "hydux",
     "elm",
     "hyperapp",
-    "redux",
-    "flux",
-    "react",
-    "picodom"
+    "pixi.js",
+    "pixijs",
+    "canvas",
+    "webgl",
+    "graphics",
+    "2d"
   ],
   "author": "Zack Young",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hydux/hydux-data/issues"
+    "url": "https://github.com/hydux/hydux-pixi/issues"
   },
-  "homepage": "https://github.com/hydux/hydux-data#readme",
+  "homepage": "https://github.com/hydux/hydux-pixi#readme",
   "devDependencies": {
     "@types/lodash": "^4.14.109",
     "@types/mocha": "^2.2.44",
@@ -62,7 +65,6 @@
   },
   "dependencies": {
     "hydux": "^0.4.3",
-    "hydux-mutator": "^0.1.11",
     "pixi-particles": "^3.0.0",
     "pixi.js": "^4.7.3",
     "tslib": "^1.9.0"
