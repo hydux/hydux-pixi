@@ -26,7 +26,7 @@ export interface FunctionalComponent<P = {}> {
   defaultProps?: Partial<P>
 }
 
-type ComponentFactory<P> = ComponentConstructor<P> | FunctionalComponent<P>
+export type ComponentFactory<P> = ComponentConstructor<P> | FunctionalComponent<P>
 export type Child = VNode | null | undefined
 export function h<P>(name: ComponentFactory<P>, attrs: null | (Attributes<any> & P), ...children: (Child | Child[])[]): VNode
 export function h(name, attrs): VNode {
@@ -81,6 +81,7 @@ export abstract class Component<P = {}, S = {}> {
   container: any
   abstract _api: ICustomAPI<any>
   private _rafId = 0
+  private _lastUpdate = 0
   constructor(props: P) {
     this.props = props
   }
@@ -91,21 +92,30 @@ export abstract class Component<P = {}, S = {}> {
   updateState() {
     this.setState()
   }
-  setState(state?: Partial<S>) {
+  setState(state?: Partial<S>, cb?: () => void) {
     if (!this.shouldUpdate(this.props, { ...this.state as any, ...state as any })) {
+      return
+    }
+    if (Date.now() - this._lastUpdate >= 16) {
+      this.setStateImmdiately(state, cb)
       return
     }
     if (this._rafId) {
       cancelAnimationFrame(this._rafId)
     }
     requestAnimationFrame(() => {
-      if (Is.def(state)) {
-        for (const key in state) {
-          this.state[key] = state[key]!
-        }
-      }
-      this.forceUpdate()
+      this.setStateImmdiately(state, cb)
     })
+  }
+  setStateImmdiately(state?: Partial<S>, cb?: () => void) {
+    if (Is.def(state)) {
+      for (const key in state) {
+        this.state[key] = state[key]!
+      }
+    }
+    this.forceUpdate()
+    Is.def(cb) && cb()
+    this._lastUpdate = Date.now()
   }
   forceUpdate() {
     const view = this.render()

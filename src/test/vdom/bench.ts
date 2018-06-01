@@ -81,7 +81,7 @@ const suitOptions = {
 const sprits1 = Array(10).fill(0).map(() => new Sprite())
 let sprits2 = Array(10).fill(0).map(() => new Sprite())
 let sp = new Sprite()
-sp.texture
+
 window['start'] = function start() {
     // add tests
   new Benchmark.Suite('base ops', Object.assign({}, suitOptions, {

@@ -2,10 +2,6 @@
 # yarn lockfile v1
 
 
-"@funkia/list@^0.1.0":
-  version "0.1.0"
-  resolved "http://registry.npm.taobao.org/@funkia/list/download/@funkia/list-0.1.0.tgz#1c7600d747260824dfc58d59a298ced296242052"
-
 "@types/fs-extra@4.0.0":
   version "4.0.0"
   resolved "http://registry.npm.taobao.org/@types/fs-extra/download/@types/fs-extra-4.0.0.tgz#1dd742ad5c9bce308f7a52d02ebc01421bc9102f"
@@ -1917,15 +1913,6 @@ https-browserify@^1.0.0:
   version "1.0.0"
   resolved "http://registry.npm.taobao.org/https-browserify/download/https-browserify-1.0.0.tgz#ec06c10e0a34c0f2faf199f7fd7fc78fffd03c73"
 
-hydux-mutator@^0.1.11:
-  version "0.1.11"
-  resolved "http://registry.npm.taobao.org/hydux-mutator/download/hydux-mutator-0.1.11.tgz#4784f43f8dd994848c8b3919d13b68dca83c280d"
-  dependencies:
-    "@funkia/list" "^0.1.0"
-    parsimmon "^1.6.4"
-    quick-lru "^1.1.0"
-    tslib "^1.8.1"
-
 hydux@^0.4.3:
   version "0.4.3"
   resolved "http://registry.npm.taobao.org/hydux/download/hydux-0.4.3.tgz#c1eccba2756199b7ab68c76d3f431cd0fe610e39"
@@ -3075,10 +3062,6 @@ parse5@4.0.0:
   version "4.0.0"
   resolved "http://registry.npm.taobao.org/parse5/download/parse5-4.0.0.tgz#6d78656e3da8d78b4ec0b906f7c08ef1dfe3f608"
 
-parsimmon@^1.6.4:
-  version "1.7.3"
-  resolved "http://registry.npm.taobao.org/parsimmon/download/parsimmon-1.7.3.tgz#3e8a9ae1f651077c4f6dcf9b3ade1f9e60d085df"
-
 pascalcase@^0.1.1:
   version "0.1.1"
   resolved "http://registry.npm.taobao.org/pascalcase/download/pascalcase-0.1.1.tgz#b363e55e8006ca6fe21784d2db22bd15d7917f14"
@@ -3367,10 +3350,6 @@ querystring-es3@^0.2.0:
 querystring@0.2.0, querystring@^0.2.0:
   version "0.2.0"
   resolved "http://registry.npm.taobao.org/querystring/download/querystring-0.2.0.tgz#b209849203bb25df820da756e747005878521620"
-
-quick-lru@^1.1.0:
-  version "1.1.0"
-  resolved "http://registry.npm.taobao.org/quick-lru/download/quick-lru-1.1.0.tgz#4360b17c61136ad38078397ff11416e186dcfbb8"
 
 randomatic@^1.1.3:
   version "1.1.7"
