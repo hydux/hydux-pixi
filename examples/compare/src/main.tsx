@@ -1,4 +1,4 @@
-import * as Hydux from '../../../../hydux'
+import * as Hydux from 'hydux'
 import withPersist from 'hydux/lib/enhancers/persist'
 import withVdom from '../../../src/index'
 import { ActionsType } from 'hydux/lib/types'

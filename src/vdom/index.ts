@@ -92,7 +92,10 @@ export abstract class Component<P = {}, S = {}> {
   updateState() {
     this.setState()
   }
-  setState(state?: Partial<S>, cb?: () => void) {
+  setState(
+    state?: Partial<S> | ((s: S) => Partial<S>),
+    cb?: () => void,
+  ) {
     if (!this.shouldUpdate(this.props, { ...this.state as any, ...state as any })) {
       return
     }
@@ -107,8 +110,14 @@ export abstract class Component<P = {}, S = {}> {
       this.setStateImmdiately(state, cb)
     })
   }
-  setStateImmdiately(state?: Partial<S>, cb?: () => void) {
+  setStateImmdiately(
+    state?: Partial<S> | ((s: S) => Partial<S>),
+    cb?: () => void,
+  ) {
     if (Is.def(state)) {
+      if (Is.fn(state)) {
+        state = state(this.state)
+      }
       for (const key in state) {
         this.state[key] = state[key]!
       }

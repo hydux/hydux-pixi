@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@inlet/react-pixi": "^0.0.11",
-    "hydux": "^0.4.3",
+    "hydux": "^0.4.6",
     "react": "^16.4.0",
     "react-dom": "^16.4.0",
     "react-pixi-fiber": "^0.4.6",

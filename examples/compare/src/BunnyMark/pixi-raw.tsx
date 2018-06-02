@@ -1,10 +1,8 @@
 import { h, patch } from '../../../../src/vdom'
 import { PIXIComponent } from '../../../../src/vdom/pixi/'
 import * as pixi from 'pixi.js'
-import * as Hydux from '../../../../../hydux'
 import Textures from '../textures'
 
-const { Cmd } = Hydux
 import getPixiApp, { stats } from '../pixi-app'
 import * as Utils from './utils'
 

@@ -1913,9 +1913,9 @@ https-browserify@^1.0.0:
   version "1.0.0"
   resolved "http://registry.npm.taobao.org/https-browserify/download/https-browserify-1.0.0.tgz#ec06c10e0a34c0f2faf199f7fd7fc78fffd03c73"
 
-hydux@^0.4.3:
-  version "0.4.3"
-  resolved "http://registry.npm.taobao.org/hydux/download/hydux-0.4.3.tgz#c1eccba2756199b7ab68c76d3f431cd0fe610e39"
+hydux@^0.4.6:
+  version "0.4.6"
+  resolved "http://registry.npm.taobao.org/hydux/download/hydux-0.4.6.tgz#9e13bf8ef54001ed033e03ac0730369ef832bdc5"
   dependencies:
     tslib "^1.8.1"
     ultradom "2.0.0"

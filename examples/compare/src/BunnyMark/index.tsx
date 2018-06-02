@@ -3,7 +3,7 @@ import { render as renderPixi } from '../../../../src/vdom/pixi'
 import '../../../../src/jsx'
 import * as pixi from 'pixi.js'
 import { Container, Sprite, Graphics, Text } from '../../../../src/vdom/pixi/components/core'
-import * as Hydux from '../../../../../hydux'
+import * as Hydux from 'hydux'
 import Textures from '../textures'
 
 const { Cmd } = Hydux
@@ -86,6 +86,7 @@ export const actions = {
     return [state, Cmd.none]
   },
   addBunnies: (count = 300) => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
+    state = { ...state }
     console.time('addBunnies')
     for (let i = 0; i < count; i++) {
       state.bunnies.push(

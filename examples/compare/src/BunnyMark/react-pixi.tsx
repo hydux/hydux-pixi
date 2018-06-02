@@ -2,9 +2,7 @@ import * as pixi from 'pixi.js'
 import '../modules'
 import { Container, withPixiApp, Stage, Sprite, render } from '@inlet/react-pixi/dist/react-pixi.production.es5.js'
 
-import * as Hydux from '../../../../../hydux'
 import Textures from '../textures'
-const { Cmd } = Hydux
 import getPixiApp, { stats } from '../pixi-app'
 import * as Utils from './utils'
 import * as React from 'react/cjs/react.production.min.js'

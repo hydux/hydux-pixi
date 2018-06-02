@@ -79,6 +79,7 @@ export const actions = {
   },
   addBunnies: (count = 300) => (state: State, actions: Actions): Hydux.AR<State, Actions> => {
     console.time('addBunnies')
+    state = { ...state }
     for (let i = 0; i < count; i++) {
       state.bunnies.push(
         initBunnyState(Textures.rabbits[state.bunnies.length % Textures.rabbits.length]),

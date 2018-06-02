@@ -41,11 +41,13 @@ export declare abstract class Component<P = {}, S = {}> {
     container: any;
     abstract _api: ICustomAPI<any>;
     private _rafId;
+    private _lastUpdate;
     constructor(props: P);
     abstract getBuiltin(): typeof NativeWrapper;
     shouldUpdate(nextProps: P, nextState: S): boolean;
     updateState(): void;
-    setState(state?: Partial<S>): void;
+    setState(state?: Partial<S> | ((s: S) => Partial<S>), cb?: () => void): void;
+    setStateImmdiately(state?: Partial<S> | ((s: S) => Partial<S>), cb?: () => void): void;
     forceUpdate(): void;
     onDidMount(): void;
     onWillUnmount(): void;

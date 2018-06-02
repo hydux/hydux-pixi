@@ -3,10 +3,7 @@ import { PIXIComponent, render } from '../../../../src/vdom/pixi/index'
 import '../../../../src/jsx'
 import * as pixi from 'pixi.js'
 import { Container, Sprite, Graphics, Text } from '../../../../src/vdom/pixi/components/core'
-import * as Hydux from '../../../../../hydux'
 import Textures from '../textures'
-
-const { Cmd } = Hydux
 import getPixiApp, { stats } from '../pixi-app'
 import * as Utils from './utils'
 
@@ -28,9 +25,8 @@ class App extends PIXIComponent {
     window['app'] = this
   }
   update() {
-    this.setState((s: this['state']) => {
-      Utils.updateBunnies(s.bunnies)
-    })
+    Utils.updateBunnies(this.state.bunnies)
+    this.setState()
   }
   addBunnies(count = 300) {
     console.time('addBunnies')

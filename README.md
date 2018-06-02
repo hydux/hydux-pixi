@@ -5,7 +5,7 @@
 
 [PIXI.js](https://pixijs.io/) renderer for [Hydux<sup style="font-size: 10px;">TM</sup>](https://github.com/hydux/hydux).
 
-This package contains two part, the first is a high-performance vdom library optimized for graphic libraries, currently support pixi.js; the second is the hydux binding for this vdom.
+This package contains two part, the first one is a high-performance vdom library optimized for graphic libraries, currently support pixi.js; the second one is the hydux binding for this vdom.
 
 ## Why not react-pixi?
 
@@ -15,7 +15,7 @@ But objects in graphics libraries(GL) like PIXI.js or three.js are just normal J
 
 ### Bunny mark
 
-The results of bunny mark on my laptop(macOS Sierra, 2.7 GHz Intel Core i5, 16 GB 1867 MHz DDR3, Intel Iris Graphics 6100 1536 MB) show it's almost the same performance of raw PIXI.js, and about 3x-4x faster then libraries like react-pixi.
+The results of bunny mark on my laptop(macOS Sierra, 2.7 GHz Intel Core i5, 16 GB 1867 MHz DDR3, Intel Iris Graphics 6100 1536 MB) show it's almost the same performance of raw PIXI.js, and about **3x-4x** faster then libraries like react-pixi.
 
 ![](https://github.com/hydux/hydux-pixi/raw/master/docs/media/compare.png)
 
@@ -77,8 +77,8 @@ class App extends PIXIComponent {
     )
   }
   update() {
-    this.setState((s: this['state']) => {
-      s.rotate = s.rotate + .5
+    this.setState({
+      rotate: this.state.rotate + .5
     })
   }
   render() {
@@ -155,11 +155,11 @@ app({
 })
 ```
 
-### How
+### Dig deeper
 
-TLNR;
+TL;NR;
 
-After some digging and experiment, I find the main issue of vdom for graphics is not the diffing, but the GC. Js is really fast, you won'd even notice it, but GC might slow down the fps because of "stop-the-would". This will delay the animation frame and cause frame drop.
+After some digging and experiment, I find the main issue of vdom for graphics is not the diffing, but the GC. Js is really fast, you won'd even notice it, but GC might slow down the fps because of "stop-the-world". This will delay the animation frame and cause frame drop.
 
 Well the vdom algorithm will create lots of small objects, this seems unavoidable. But most GC algorithm would divides the heap into several generations, allocation/collection in new spaces are very cheap, but not for old spaces(if you want to read more about GC in v8, you can take this post: <http://www.jayconrod.com/posts/55/a-tour-of-v8-garbage-collection>).
 
