@@ -15,3 +15,4 @@ addons:
 env:
   - CXX=g++-4.9
 script: npm test
+cache: yarn
