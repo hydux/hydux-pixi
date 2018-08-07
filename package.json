@@ -5,6 +5,7 @@
   "main": "./lib/index.js",
   "typings": "./lib/index",
   "types": "./lib/index",
+  "sideEffects": false,
   "scripts": {
     "build": "del lib && tsc",
     "build:dist": "webpack -p --progress --profile",
@@ -64,9 +65,11 @@
     "webpack": "^3.10.0"
   },
   "dependencies": {
-    "hydux": "^0.4.6",
     "pixi-particles": "^3.0.0",
     "pixi.js": "^4.7.3",
     "tslib": "^1.9.0"
+  },
+  "peerDependencies": {
+    "hydux": "^0.5.5"
   }
 }

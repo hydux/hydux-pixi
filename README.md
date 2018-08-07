@@ -27,7 +27,7 @@ You can test it online: https://hydux.github.io/hydux-pixi/compare/?type=pixi-ra
 ## Install
 
 ```sh
-yarn add hydux-pixi # or npm i hydux-pixi
+yarn add hydux hydux-pixi # or npm i hydux hydux-pixi
 ```
 
 ## Usage
