@@ -46,12 +46,12 @@
     "@types/pixi.js": "^4.7.3",
     "awesome-typescript-loader": "^3.4.1",
     "benchmark": "^2.1.4",
-    "canvas": "^1.6.11",
+    "canvas": "^1.6.12",
     "clean-webpack-plugin": "^0.1.17",
     "cross-env": "^5.1.1",
     "debug": "^3.1.0",
     "del-cli": "^1.1.0",
-    "jsdom": "^11.10.0",
+    "jsdom": "^12.0.0",
     "mocha": "^4.0.1",
     "nyc": "^11.8.0",
     "power-assert": "^1.4.4",
@@ -69,7 +69,7 @@
     "pixi.js": "^4.7.3",
     "tslib": "^1.9.0"
   },
-  "peerDependencies": {
+  "optionalDependencies": {
     "hydux": "^0.5.5"
   }
 }

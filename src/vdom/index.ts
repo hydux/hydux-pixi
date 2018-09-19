@@ -119,7 +119,7 @@ export abstract class Component<P = {}, S = {}> {
         state = state(this.state)
       }
       for (const key in state) {
-        this.state[key] = state[key]!
+        this.state[key] = state[key] as any
       }
     }
     this.forceUpdate()

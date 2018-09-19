@@ -1,2 +1,5 @@
 docs
 examples
+coverage
+.vscode
+.nyc_output
