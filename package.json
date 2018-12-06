@@ -22,6 +22,10 @@
     "type": "git",
     "url": "git+https://github.com/hydux/hydux-pixi.git"
   },
+  "files": [
+    "lib",
+    "dist"
+  ],
   "keywords": [
     "hydux",
     "elm",
